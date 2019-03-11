@@ -2,14 +2,14 @@ import os
 import sys
 import unicodedata
 
-class Phrase:
-    _PHRASE=dict()
+class Phrases:
+    _PHRASES=dict()
 
     @classmethod
     def forLanguage(cls,language):
-        if not language in cls._PHRASE:
-            cls._PHRASE[language]=Phrase(language)
-        return cls._PHRASE[language]
+        if not language in cls._PHRASES:
+            cls._PHRASES[language]=Phrase(language)
+        return cls._PHRASES[language]
 
     def __init__(self, language):
         if sys.version < "3":
@@ -108,52 +108,53 @@ class Phrase:
             k+=1
             c = c*B+d
 
-        return c+((pow(B,k)-1)//(B-1))-1
+        c += ((pow(B,k)-1)//(B-1))
+        return c-1
 
     def toPhrase(self,number):
         k = 0;
         B = self.radix
-        column = number+1
+        c = number+1
         while True:
             k+=1
             offset = ((pow(B,k+1)-1)//(B-1));
-            if column < offset: break
+            if c < offset: break
 
         offset = ((pow(B,k)-1)//(B-1))
-        column -= offset;
+        c -= offset;
         phrase=[self.words[0] for i in range(k)]
 
         for i in range(k):
-            d = column%B
-            column=column//B
+            d = c%B
+            c=c//B
             phrase[k-1-i]=self.words[d]
 
         return self.toString(phrase)
 
 def test():
-    phrase = Phrase("test")
-    phrases = dict()
-    for i in xrange(0,10000):
-        words=phrase.toPhrase(i)
-        number=phrase.toNumber(words)
-        assert not words in phrases, "collision " + str(words)
+    phrases = Phrases("test")
+    known = dict()
+    for i in xrange(0,100000):
+        words=phrases.toPhrase(i)
+        number=phrases.toNumber(words)
+        assert not words in known, "collision " + str(words)
         assert i == number, "missed " + str(words)
-        phrases[words]=number
+        known[words]=number
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'test':
         test()
         return
 
-    phrase = Phrase("english")
+    phrases = Phrases("english")
     for i in range(1,len(sys.argv)):
         x=sys.argv[i]
 
         if x.isdigit():
-            y = phrase.toPhrase(int(x))
+            y = phrases.toPhrase(int(x))
             print("phrase(" + str(int(x)) + ")=" + str(y))
         else:
-            y = phrase.toNumber(x)
+            y = phrases.toNumber(x)
             print("number(" + str(x) + ")=" + str(y))
 
 if __name__ == "__main__":
