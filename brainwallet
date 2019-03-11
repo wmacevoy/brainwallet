@@ -1,0 +1,20 @@
+# suppored --language=(english|japanese|chinese_simplified|chinese_traditional|french|italian|spanish|korean|/path/to/wordlist.txt)
+# --entropy <keyboardfaceroll>
+# --entropy <keyboardfaceroll>
+
+brainwallet --generate [128|160|192|224|256] --recover 3 of 5
+phrase: <list of words>
+entropy: base58 entropy of phrase
+any 3 of the following 5 recover phrases will recover the phrase
+recover: <list of words>
+entropy: base58 entropy of phrase
+recover: <list of words>
+recover: <list of words>
+recover: <list of words>
+recover: <list of words>
+
+brainwallet --recover 3 of 5 --recover "words" --recover "words" --recover "words"
+
+brainwallet --hd-master-key --phrase "phrase"
+brainwallet --send <number> --phrase "phrase"
+brainwallet --receive <number> --phrase "phrase"

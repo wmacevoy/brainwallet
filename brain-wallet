@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+
+import argparse
+import binascii
+import sys
+
+from mnemonic import Mnemonic
+
+def main():
+    data = sys.stdin.readline().strip()
+    m = Mnemonic("english")
+    parser = argparse.ArgumentParser(description='brain wallet tools')
+    parser.add_argument("--words",dest='words',nargs='+')
+    parser.add_argument("--entropy",dest='entropy',nargs=1)
+    parser.add_argument("--seed",dest='seed',nargs=1)
+    parser.add_argument("--generate",nargs=0)
+    parser.add_argument('--toSeed',nargs=0)
+    parser.add_argument('--toSecret',nargs=1)
+    parser.add_argument('--toPublic',nargs=1)
+
+    args = parser.parse_args()
+    
+    if args.generate:
+        m.generate(128)
+
+if __name__ == "__main__":
+    main()
