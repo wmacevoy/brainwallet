@@ -1,6 +1,8 @@
 import os
 import sys
-import unicodedata
+import re
+import math
+from check import Check
 
 class Phrases:
     _PHRASES=dict()
@@ -11,44 +13,57 @@ class Phrases:
             cls._PHRASES[language]=Phrase(language)
         return cls._PHRASES[language]
 
-    def __init__(self, language):
-        if sys.version < "3":
-            with open("%s/%s.txt" % (self._getDirectory(), language), "r") as f:
-                self.words = [w.strip().decode("utf8") for w in f.readlines()]
-        else:
-            with open(
-                "%s/%s.txt" % (self._getDirectory(), language), "r", encoding="utf-8"
-            ) as f:
-                self.words = [w.strip() for w in f.readlines()]
-        self.words.sort()
-        self.numbers=dict()
-        for i in range(len(self.words)):
-            self.numbers[self.words[i]]=i
-        self.language = language
-        self.radix = len(self.words)
-
     @classmethod
     def _getDirectory(cls):
         return os.path.join(os.path.dirname(__file__), "wordlist")
 
     @classmethod
     def getLanguages(cls):
-        return [
-            f.split(".")[0]
-            for f in os.listdir(cls._getDirectory())
-            if f.endswith(".txt")
-        ]
+        languages=[]
+        suffex=".txt"
+        for file in os.listdir(cls._getDirectory()):
+            if file.endswith(suffix):
+                languages.add(file[:-len(suffex)])
+        return languages
+
 
     @classmethod
-    def normalizeString(cls, txt):
-        if isinstance(txt, str if sys.version < "3" else bytes):
-            utxt = txt.decode("utf8")
-        elif isinstance(txt, unicode if sys.version < "3" else str):  # noqa: F821
-            utxt = txt
-        else:
-            raise TypeError("String value expected")
+    def _getFilename(cls,language):
+        filename = "%s/%s.txt" % (cls._getDirectory(), language)
+        return filename
 
-        return unicodedata.normalize("NFKD", utxt)
+    @classmethod
+    def getWords(cls,language):
+        filename = cls._getFilename(language)
+        if Check.PYTHON3:
+            file = open(filename,"r",encoding="utf-8")
+        else:
+            file = open(filename,"r")
+        words = [Check.toString(word).strip() for word in file.readlines()]
+
+        words.sort()
+
+        if len(words)<2: 
+            raise ValueError("too few words")
+        for i in range(len(words)):
+            if len(words[i])==0: 
+                raise ValueError("empty word")
+            if i > 0 and words[i] == words[i-1]: 
+                raise ValueError("duplicate word")
+        return words
+
+    @classmethod
+    def invertWords(cls,words):
+        invWords=dict()
+        for i in range(len(words)):
+            invWords[words[i]]=i
+        return invWords
+
+    def __init__(self, language):
+        self.words = self.getWords(language)
+        self.invWords = self.invertWords(self.words)
+        self.language = language
+        self.radix = len(self.words)
 
     @classmethod
     def detectLanguage(cls, phrase):
@@ -65,72 +80,51 @@ class Phrases:
         if self.language == "japanese":
             return u"\u3000"
         else:
-            return " "
+            return u" "
 
-    _STRING_TYPE=str if sys.version_info[0] >= 3 else basestring
-    @classmethod
-    def isString(cls,value):
-        return isinstance(value,cls._STRING_TYPE)
-
-    def toList(self,phrase):
-        result=phrase
-        if self.isString(phrase):
-            result = self.normalizeString(result)
-            result=result.split(" ")
-            if self.language == "japanese":
-                jResult=[]
-                for word in result:
-                    jResult.extend(word.split(u"\u3000"))
-                result=jResult
-        return result
-
-    def toString(self,phrase):
-        if not self.isString(phrase):
-            phrase = self.space().join(phrase)
-        return phrase
+    def toList(self,_value):
+        value=_value
+        if not isinstance(value,list):
+            value = re.split(u"[ \u3000]",value,flags=re.UNICODE)
+        return value
 
     def isPhrase(self,words):
         words=self.toList(words)
-
         for word in words:
-            if not word in self.numbers: return False
+            if not word in self.invWords: return False
         return True
 
+    def _offset(self,length): # number of phrases shorter than length
+        return ((pow(self.radix,length)-1)//(self.radix-1))-1
+
+    def _length(self,number):
+        length=int(math.floor(math.log((number+1)*(self.radix-1)+1,self.radix)))
+        while self._offset(length+1) <= number: length += 1
+        while self._offset(length)  > number: length += 1
+        return length
+                          
     def toNumber(self,phrase):
         phrase=self.toList(phrase)
         if not self.isPhrase(phrase):
             raise ValueError("unknown phrase")
-        c=0
-        k=0
-        B=self.radix
-        for i in range(len(phrase)):
-            d = self.numbers[phrase[i]]
-            k+=1
-            c = c*B+d
-
-        c += ((pow(B,k)-1)//(B-1))
-        return c-1
+        length=len(phrase)
+        number = 0
+        for i in range(length):
+            digit = self.invWords[phrase[i]]
+            number = number*self.radix + digit
+        number += self._offset(length)
+        return number
 
     def toPhrase(self,number):
-        k = 0;
-        B = self.radix
-        c = number+1
-        while True:
-            k+=1
-            offset = ((pow(B,k+1)-1)//(B-1));
-            if c < offset: break
-
-        offset = ((pow(B,k)-1)//(B-1))
-        c -= offset;
-        phrase=[self.words[0] for i in range(k)]
-
-        for i in range(k):
-            d = c%B
-            c=c//B
-            phrase[k-1-i]=self.words[d]
-
-        return self.toString(phrase)
-
+        length=self._length(number)
+        number -= self._offset(length)
+        words = [u""]*length
+        for i in range(length):
+            words[length-1-i]=self.words[number % self.radix]
+            number = number // self.radix
+        phrase=self.space().join(words)
+        return phrase
+        
 def test():
     phrases = Phrases("test")
     known = dict()

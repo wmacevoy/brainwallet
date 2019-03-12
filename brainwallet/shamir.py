@@ -1,56 +1,29 @@
 #!/usr/bin/env python
 
-from __future__ import division
-from __future__ import print_function
 from rng import RNG
-from millerrabin import MillerRabin
+from check import Check
+
 
 class Shamir:
-    _RNG=RNG()
-    _MILLER_RABIN=MillerRabin(10,_RNG)
-    _PRIMES=set()
-
-    @classmethod
-    def isPrime(cls,n):
-        if n in cls._PRIMES: return True
-        if cls._MILLER_RABIN.isProbablyPrime(n):
-            cls._PRIMES.add(n)
-            return True
-        return False
-
-    @classmethod
-    def _toInt(cls,n,name=None,min=None,max=None):
-        if name == None:
-            name = "value"
-        if int(n) != n:
-            raise ValueError(str(name) + " must be an integer")
-        n = int(n)
-        if min != None and n < min:
-            raise ValueError(str(name) + " must be >= " + str(min))
-        if max != None and n > max:
-            raise ValueError(str(name) + " must be <= " + str(max))
-        return n
-
     def __init__(self, minimum, shares,prime,rng=RNG()):
-        shares = Shamir._toInt(shares,"shares",1)
-        minimum = Shamir._toInt(minimum,"minimum",1,shares)
-        if not Shamir.isPrime(prime):
-            raise ValueError("invalid prime")
+        shares = Check.toInt(shares,"shares",1)
+        minimum = Check.toInt(minimum,"minimum",1,shares)
+        prime = Check.toPrime(prime)
 
         self._rng = rng
         self._minimum = minimum
         self._shares = shares
         self._prime = prime
-        self._keys = [None for i in range(0,self._shares+1)]
+        self._keys = [None]*(self._shares+1)
 
     def setKey(self,index,key):
-        index=self._toInt(index,"index",0,self._shares)
+        index=Check.toInt(index,"index",0,self._shares)
         name="key" if index > 0 else "secret"
-        key=self._toInt(key,name,0,self._prime-1)
+        key=Check.toInt(key,name,0,self._prime-1)
         self._keys[index] = key
 
     def clearKey(self,index):
-        index=self._toInt(index,"index",0,self._shares)
+        index=Check.toInt(index,"index",0,self._shares)
         name="key" if index > 0 else "secret"
         self._keys[index] = None
 
@@ -61,7 +34,7 @@ class Shamir:
         self.setKey(0,secret)
 
     def getKey(self,index):
-        index=Shamir._toInt(index,"index",0,self._shares)
+        index=Check.toInt(index,"index",0,self._shares)
         if self._keys[index] == None:
             self.recoverKeys()
         return self._keys[index]
@@ -72,9 +45,6 @@ class Shamir:
     def makeKeys(self):
         if self._keys[0] == None:
             raise ValueError("secret must be set")
-        if self._shares == 1:
-            return
-
         secret=self._keys[0]
 
         poly = [0 for i in range(self._minimum)]
@@ -89,12 +59,12 @@ class Shamir:
         '''evaluates polynomial (coefficient tuple) at x, used to generate a
         shamir pool in make_random_shares below.
         '''
-        accum = 0
-        for coeff in reversed(poly):
-            accum *= x
-            accum += coeff
-            accum %= self._prime
-        return accum
+        a = 0
+        for c in reversed(poly):
+            a *= x
+            a += c
+            a %= self._prime
+        return a
 
     def _extended_gcd(self,a,b):
         '''

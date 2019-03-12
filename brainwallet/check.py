@@ -1,76 +1,92 @@
+import sys
+import unicodedata
 from rng import RNG
 from millerrabin import MillerRabin
 
 class Check:
-    _RNG=RNG()
-    _MILLER_RABIN=MillerRabin(10,_RNG)
+
+    @classmethod
+    def isInt(cls,value,min=None,max=None):
+        try:
+            intValue=int(value)
+        except:
+            return False
+
+        if intValue != value: return False
+
+        if min != None and intValue < min: return False
+        if max != None and intValue > max: return False
+
+        return True
+
+    @classmethod
+    def toInt(cls,value,name="value",min=None,max=None):
+        if not cls.isInt(value,min,max):
+            raise ValueError(cls._toIntMessage(value,name,min,max))
+        return int(value)
+
+    _MILLER_RABIN=MillerRabin()
     _PRIMES=set()
 
     @classmethod
-    def isPrime(cls,prime,name="prime"):
-        prime=cls.toInt(prime,name)
-        if prime in cls._PRIMES: return prime
-        if cls._MILLER_RABIN.isProbablyPrime(prime):
-            cls._PRIMES.add(prime)
-            return prime
+    def isPrime(cls,value):
+        if not cls.isInt(value): return False
+        value=int(value)
+        if value in cls._PRIMES: return True
+        if cls._MILLER_RABIN.isProbablyPrime(value):
+            cls._PRIMES.add(value)
+            return True
         return False
         
     @classmethod
     def toPrime(cls,prime,name="prime"):
-        if not cls.isPrime(prime,name):
-            raise ValueError(str(name) + " must be prime")
+        if not cls.isPrime(prime):
+            raise ValueError(cls._toPrimeMessage(prime,name))
         return int(prime)
 
-    @classmethod
-    def isInt(cls,value,name="value",min=None,max=None):
-        ok = False
-        try:
-            ok = (int(value) == value)
-        except:
-            pass
-
-        if not ok: return False
-        value = int(value)
-        if min != None and value < min: return False
-        if max != None and value > max: return False
-        return True
-
-    @classmethod
-    def toInt(cls,n,name="value",min=None,max=None):
-        if not cls.isInt(cls,n,name,min,max):
-            if min == None: min="-infinity"
-            if max == None: max="+infinity"
-            raise ValueError(str(name) + " must be an integer in the range [" + str(min) + "," + str(max) + "]")
-        return int(n)
-
-    @classmethod
-    def isString(cls,value):
-        try:
-            value = cls.normalizeString(cls, value)
-        except:
-            return False
-        return True
-
-    @classmethod
-    def toString(cls,value):
-        try:
-            return cls.normalizeString(cls, value)
-        except:
-            return str(value)
 
     @classmethod
     def isList(cls,value):
         return type(value) == list
 
+    PYTHON3 = (sys.version_info.major >= 3)
+    UNICODE = str if PYTHON3 else unicode
+    STRING = str if PYTHON3 else basestring
+
     @classmethod
-    def normalizeString(cls, txt):
-        if isinstance(txt, str if sys.version < "3" else bytes):
-            utxt = txt.decode("utf8")
-        elif isinstance(txt, unicode if sys.version < "3" else str):  # noqa: F821
-            utxt = txt
-        else:
-            raise TypeError("String value expected")
+    def isString(cls,value):
+        q = isinstance(value,(cls.STRING,bytes))
+        return q
 
-        return unicodedata.normalize("NFKD", utxt)
-    
+    @classmethod
+    def toString(cls, value):
+        if not cls.isString(value):
+            value=str(value)
 
+        if not isinstance(value,cls.UNICODE):
+            value=value.decode("utf-8")
+
+        value = unicodedata.normalize("NFKD", value)
+
+        return value
+
+    @classmethod
+    def _toMessage(cls,value,name):
+        msg=str(name) + " (" + str(value) + ", a " + str(type(value)) + " type)"
+        return msg
+
+    @classmethod
+    def _toIntMessage(cls,value,name,min,max):
+        msg = cls._toMessage(value,name) + " must be an integer"
+        if min != None and max == None:
+            msg += " >= " + str(min)
+        elif min == None and max != None:
+            msg += " <= " + str(max)
+        elif min != None and max != None:        
+            msg += " in [" + str(min) + "," + str(max) + "]"
+        return msg
+
+    @classmethod
+    def _toPrimeMessage(cls,value,name):
+        msg = cls._toMessage(value,name) + " must be a prime"
+        return msg
