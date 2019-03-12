@@ -47,26 +47,25 @@ class Shamir:
             raise ValueError("secret must be set")
         secret=self._keys[0]
 
-        poly = [0 for i in range(self._minimum)]
-        poly[0]=secret
+        cs = [0 for i in range(self._minimum)]
+        cs[0]=secret
         for i in range(1,self._minimum):
-            poly[i]=self._rng.next(self._prime)
+            cs[i]=self._rng.next(self._prime)
         self._keys[0]=secret
         for i in range(1,self._shares+1):
-            self._keys[i]=self._eval_at(poly,i)
+            self._keys[i]=self._evalPoly(cs,i)
 
-    def _eval_at(self,poly, x):
-        '''evaluates polynomial (coefficient tuple) at x, used to generate a
-        shamir pool in make_random_shares below.
-        '''
+    def _evalPoly(self,cs, x):
+        '''evaluates polynomial (coefficient tuple) at x'''
         a = 0
-        for c in reversed(poly):
+        for c in reversed(cs):
             a *= x
             a += c
             a %= self._prime
         return a
 
-    def _extended_gcd(self,a,b):
+    @classmethod
+    def _extendedGCD(cls,a,b):
         '''
         division in integers modulus p means finding the inverse of the
         denominator modulo p and then multiplying the numerator by this
@@ -75,24 +74,22 @@ class Shamir:
         http://en.wikipedia.org/wiki/Modular_multiplicative_inverse#Computation
         '''
         x = 0
-        last_x = 1
+        lastX = 1
         y = 1
-        last_y = 0
+        lastY = 0
         while b != 0:
             quot = a // b
             a, b = b, a%b
-            x, last_x = last_x - quot * x, x
-            y, last_y = last_y - quot * y, y
-        return last_x, last_y
+            x, lastX = lastX - quot * x, x
+            y, lastY = lastY - quot * y, y
+        return lastX, lastY
         
     def _divmod(self,num, den):
-        '''compute num / den modulo prime
-        
-        To explain what this means, the return value will be such that
-        the following is true: den * _divmod(num, den, p) % p == num
-        '''
-        inv, _ = self._extended_gcd(den, self._prime)
-        return num * inv
+        '''compute num / den modulo prime'''
+        num = num % self._prime
+        den = den % self._prime
+        inv, _ = self._extendedGCD(den, self._prime)
+        return (num * inv) % self._prime
 
     def _PI(self,vals):
         a = 1
@@ -101,29 +98,27 @@ class Shamir:
             a = (a*v) % self._prime
         return a
         
-    def _lagrange_interpolate(self,x, x_s, y_s):
+    def _lagrangeInterpolate(self,x, xs, ys):
         '''
         Find the y-value for the given x, given n (x, y) points;
         k points will define a polynomial of up to kth order
         '''
-        p = self._prime
-        k = len(x_s)
-        assert k == len(set(x_s)), "points must be distinct"
+        k = len(xs)
+        assert k == len(set(xs)), "points must be distinct"
 
         nums = []
         dens = []
         
         for i in range(k):
-            others = list(x_s)
+            others = list(xs)
             cur = others.pop(i)
             nums.append(self._PI(x - o for o in others))
             dens.append(self._PI(cur - o for o in others))
 
         den = self._PI(dens)
-        num = sum([self._divmod(nums[i] * den * y_s[i] % p, dens[i])
+        num = sum([self._divmod(nums[i] * den * ys[i], dens[i])
                for i in range(k)])
-
-        return (self._divmod(num, den) + p) % p
+        return self._divmod(num, den)
 
     def recoverKeys(self):
         xs=[]
@@ -140,7 +135,7 @@ class Shamir:
 
         for i in xrange(0,self._shares+1):
             if self._keys[i] == None:
-                self._keys[i]=self._lagrange_interpolate(i,xs,ys)
+                self._keys[i]=self._lagrangeInterpolate(i,xs,ys)
 
 def main():
     prime = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
