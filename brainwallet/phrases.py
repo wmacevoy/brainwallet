@@ -10,7 +10,7 @@ class Phrases:
     @classmethod
     def forLanguage(cls,language):
         if not language in cls._PHRASES:
-            cls._PHRASES[language]=Phrase(language)
+            cls._PHRASES[language]=Phrases(language)
         return cls._PHRASES[language]
 
     @classmethod

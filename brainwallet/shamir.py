@@ -16,6 +16,15 @@ class Shamir:
         self._prime = prime
         self._keys = [None]*(self._shares+1)
 
+    def getMinimum(self):
+        return self._minimum
+
+    def getShares(self):
+        return self._shares
+
+    def getPrime(self):
+        return self._prime
+
     def setKey(self,index,key):
         index=Check.toInt(index,"index",0,self._shares)
         name="key" if index > 0 else "secret"
