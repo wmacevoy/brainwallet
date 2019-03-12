@@ -6,33 +6,38 @@ class RNG:
     def __init__(self,source = os.urandom):
         self.source = source
 
-    def next(self,n):
-        ''' uniformly random value [0,n-1] derived from source '''
-        bits = int(math.ceil(math.log(n,2)))
+    _BITS=dict()
+
+    @classmethod
+    def _bits(cls,n):
+        if n in cls._BITS: return cls._BITS[n]
+        bits = int(math.ceil(math.log(int(n),2)))
+        # fix inexact results of float math
         while 2**bits < n:
             bits = bits + 1
+        while 2**(bits-1) > n:
+            bits = bits - 1
 
-        if bits % 8 != 0:
-            bytes = bits/8 + 1
-        else:
-            bytes = bits/8
+        cls._BITS[n]=bits
+        return bits
 
-        mask = 2**bits-1
-
-        ok = False
-        while not ok:
+    def next(self,n):
+        ''' uniformly random value [0,n-1] derived from source '''
+        bits = self._bits(n)
+        bytes = (bits + 7)//8
+        mask = 2**bits - 1
+        while True:
             data = self.source(bytes)
             k = 0
-            for i in xrange(bytes):
+            for i in range(bytes):
                 bi = ord(data[i])
                 k = k | (bi << (8*i))
             k = k & mask
-            ok = k < n
-        return k
+            if k < n: return k
 
 def main():
     rng = RNG()
-    for i in xrange(1,len(sys.argv)):
+    for i in range(1,len(sys.argv)):
         print rng.next(int(sys.argv[i]))
 
 if __name__ == "__main__":
