@@ -20,11 +20,11 @@ class Phrases:
     @classmethod
     def getLanguages(cls):
         languages=[]
-        suffex=".txt"
+        suffix=".txt"
         for filename in os.listdir(cls._getDirectory()):
             if filename.endswith(suffix):
-                language=Check.toString(filename[:-len(suffex)])
-                languages.add(language)
+                language=Check.toString(filename[:-len(suffix)])
+                languages.append(language)
         return languages
 
 
@@ -86,7 +86,16 @@ class Phrases:
     def toList(self,_value):
         value=_value
         if not isinstance(value,list):
-            value = re.split(u"[ \u3000]",value,flags=re.UNICODE)
+            value = re.split(u"[ \u3000\r\n\t]+",value,flags=re.UNICODE)
+        else:
+            value=value[:] # copy
+
+        while len(value)>0 and len(value[len(value)-1])==0: 
+            del value[len(value)-1]
+
+        while len(value)>0 and len(value[0])==0:
+            del value[0]
+
         return value
 
     def isPhrase(self,words):

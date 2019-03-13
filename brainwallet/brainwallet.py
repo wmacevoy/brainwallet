@@ -12,11 +12,6 @@ import hashlib
 import hmac
 
 class BrainWallet:
-    DEFAULT_MINIMUM = 2
-    DEFAULT_SHARES  = 4
-    DEFAULT_PRIME = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
-    DEFAULT_LANGUAGE = "english"
-
     # primes slightly larger than a power of 2
     BIGGER_PRIMES={128:2**128+51,
                 160:2**160+7,
@@ -31,6 +26,11 @@ class BrainWallet:
                   224:2**224-63,
                   256:2**256-189}
 
+    DEFAULT_MINIMUM = 2
+    DEFAULT_SHARES  = 4
+    DEFAULT_PRIME = SMALLER_PRIMES[128]
+    DEFAULT_LANGUAGE = "english"
+
     def __init__(self):
         self._minimum = None
         self._shares = None
@@ -38,6 +38,7 @@ class BrainWallet:
         self._language = None
         self._shamir = None
         self._phrases = None
+        self._secret = None
 
     def getMinimum(self):
         return self._minimum if self._minimum != None else self.DEFAULT_MINIMUM
@@ -76,10 +77,6 @@ class BrainWallet:
         return self._language if self._language != None else self.DEFAULT_LANGUAGE
 
     def setLanguage(self,language):
-        if self._phrases != None:
-            raise ValueError("phrases already configured")
-        if self._language != None:
-            raise ValueError("language already set")
         language = Check.toString(language)
         if not (language in Phrases.getLanguages()):
             raise ValueError("language missing")
@@ -88,24 +85,37 @@ class BrainWallet:
     def _getShamir(self):
         if self._shamir == None:
             self._shamir = Shamir(self.getMinimum(),self.getShares(),self.getPrime())
+            if self._secret != None:
+                self._shamir.setSecret(self._secret)
         return self._shamir
 
     def _getPhrases(self):
-        if self._phrases == None:
-            self._phrases = Phrases.forLanguage(self.getLanguage())
-        return self._phrases
+        return Phrases.forLanguage(self.getLanguage())
 
     def number(self,phrase):
-        return self._getPhrases().toNumber(Check.toString(phrase))
-
+        phrase=Check.toString(phrase)
+        if self._getPhrases().isPhrase(phrase):
+            return self._getPhrases().toNumber(phrase)
+        else:
+            detected=Phrases.detectLanguage(phrase)
+            return Phrases.forLanguage(detected).toNumber(phrase)
+                
     def phrase(self,number):
         return self._getPhrases().toPhrase(Check.toInt(number))
 
     def getSecret(self):
-        return self.phrase(self._shamir.getSecret())
+        if self._shamir != None:
+            return self.phrase(self._getShamir().getSecret())
+        elif self._secret != None:
+            return self._secret
+        else:
+            raise ValueError("secret and recovery keys are not set")
 
     def setSecret(self,value):
+        self._secret = value
+        if self._shamir != None:
             self._getShamir().setSecret(self.number(value))
+
     def getKey(self,index):
         index = Check.toInt(index,"index",1,self.getShares())
         return self.phrase(self._getShamir().getKey(index))
@@ -210,9 +220,9 @@ class BrainWallet:
         print ("--shares=%d" % shares)
         print ("--secret=\"%s\"" % self.getSecret())
         for i in range(1,self.getShares()+1):
-            print ("--key%d/%d=\"%s\"" % (i,shares,self.getKey(i)))
+            print ("--key%d=\"%s\"" % (i,shares,self.getKey(i)))
         print ("Secret can be recovered with any %d of the %d keys" % (minimum, shares))
-        print ("Remember the key id (1/%d-%d/%d) and phrase." % (shares,shares,shares))
+        print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
     def cli(self,args):
         for i in range(len(args)):
@@ -238,13 +248,13 @@ class BrainWallet:
             if arg.startswith(cmd+"="): self.setBits(arg[len(cmd)+1:])
 
             cmd="--secret"
-            if arg == cmd: print(self.getSecret())
+            if arg == cmd: print(self.getSecret().encode('utf-8'))
             if arg.startswith(cmd+"="): self.setSecret(arg[len(cmd)+1:])
 
             for index in range(1,self.getShares()+1):
-                cmd="--key"+str(index)+"/"+str(self.getShares())
+                cmd="--key"+str(index)
                 if arg == cmd: 
-                    print(self.getKey(index))
+                    print(self.getKey(index).encode('utf-8'))
                 if arg.startswith(cmd+"="): 
                     self.setKey(index,arg[len(cmd)+1:])
 

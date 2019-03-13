@@ -6,7 +6,7 @@ setup(
     version="0.1",
     author="Warren MacEvoy",
     author_email="wmacevoy@gmail.com",
-    description="Brain wallet tools",
+    description="Brain Wallet tools",
     url="https://github.com/wmacevoy/brainwallet",
     packages=["brainwallet"],
     package_data={"brainwallet": ["wordlist/*.txt"]},
