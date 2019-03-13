@@ -29,7 +29,7 @@ import os
 import sys
 import unicodedata
 
-from pbkdf2 import PBKDF2
+# from pbkdf2 import PBKDF2
 
 PBKDF2_ROUNDS = 2048
 
@@ -245,6 +245,7 @@ class Mnemonic(object):
     def to_seed(cls, mnemonic, passphrase=""):
         mnemonic = cls.normalize_string(mnemonic)
         passphrase = cls.normalize_string(passphrase)
+
         return PBKDF2(
             mnemonic,
             u"mnemonic" + passphrase,

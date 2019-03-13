@@ -21,9 +21,10 @@ class Phrases:
     def getLanguages(cls):
         languages=[]
         suffex=".txt"
-        for file in os.listdir(cls._getDirectory()):
-            if file.endswith(suffix):
-                languages.add(file[:-len(suffex)])
+        for filename in os.listdir(cls._getDirectory()):
+            if filename.endswith(suffix):
+                language=Check.toString(filename[:-len(suffex)])
+                languages.add(language)
         return languages
 
 

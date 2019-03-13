@@ -7,6 +7,8 @@ class Check:
 
     @classmethod
     def isInt(cls,value,min=None,max=None):
+        if cls.isString(value) and value.isdigit():
+            value=int(value)
         try:
             intValue=int(value)
         except:
@@ -23,6 +25,8 @@ class Check:
     def toInt(cls,value,name="value",min=None,max=None):
         if not cls.isInt(value,min,max):
             raise ValueError(cls._toIntMessage(value,name,min,max))
+        if cls.isString(value) and value.isdigit():
+            value=int(value)
         return int(value)
 
     _MILLER_RABIN=MillerRabin()
