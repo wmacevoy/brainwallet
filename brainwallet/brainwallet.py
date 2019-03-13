@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import sys
 from shamir import Shamir
 from phrases import Phrases
 from check import Check
@@ -11,57 +12,170 @@ class BrainWallet:
     DEFAULT_PRIME = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
     DEFAULT_LANGUAGE = "english"
 
-    def __init__(self, minimum=DEFAULT_MINIMUM, shares=DEFAULT_SHARES, prime=DEFAULT_PRIME, language=DEFAULT_LANGUAGE):
-        self._shamir = Shamir(minimum,shares,prime)
-        self._phrases = Phrases.forLanguage(language)
+    # primes slightly larger than a power of 2
+    BIGGER_PRIMES={128:2**128+51,
+                160:2**160+7,
+                192:2**192+133,
+                224:2**224+735,
+                256:2**256+297}
+
+    # primes slightly smaller than a power of 2
+    SMALLER_PRIMES={128:2**128-159,
+                  160:2**160-47,
+                  192:2**192-237,
+                  224:2**224-63,
+                  256:2**256-189}
+
+    def __init__(self):
+        self._minimum = None
+        self._shares = None
+        self._prime = None
+        self._language = None
+        self._shamir = None
+        self._phrases = None
 
     def getMinimum(self):
-        return self._shamir.getMinimum()
+        return self._minimum if self._minimum != None else self.DEFAULT_MINIMUM
+    def setMinimum(self,value):
+        if self._shamir != None:
+            raise ValueError("shamir already configured")
+        if self._minimum != None:
+            raise ValueError("minimum already set")
+        self._minimum = Check.toInt(value,"minimum",1)
+
     def getShares(self):
-        return self._shamir.getShares()
+        return self._shares if self._shares != None else self.DEFAULT_SHARES
+
+    def setShares(self,value):
+        if self._shamir != None:
+            raise ValueError("shamir already configured")
+        if self._shares != None:
+            raise ValueError("shares already set")
+        self._shares = Check.toInt(value,"shares",1)
+        
     def getPrime(self):
-        return self._shamir.getPrime()
+        return self._prime if self._prime != None else self.DEFAULT_PRIME
+
+    def setBits(self,bits):
+        bits=Check.toInt(bits,"bits",128,256)
+        self.setPrime(self.SMALLER_PRIMES[bits])
+
+    def setPrime(self,value):
+        if self._shamir != None:
+            raise ValueError("shamir already configured")
+        if self._prime != None:
+            raise ValueError("prime already set")
+        self._prime = Check.toPrime(value)
+
     def getLanguage(self):
-        return self._phrases.language
+        return self._language if self._language != None else self.DEFAULT_LANGUAGE
+
+    def setLanguage(self,language):
+        if self._phrases != None:
+            raise ValueError("phrases already configured")
+        if self._language != None:
+            raise ValueError("language already set")
+        language = Check.toString(language)
+        if not (language in Phrases.getLanguages()):
+            raise ValueError("language missing")
+        self._language = language
+
+    def _getShamir(self):
+        if self._shamir == None:
+            self._shamir = Shamir(self.getMinimum(),self.getShares(),self.getPrime())
+        return self._shamir
+
+    def _getPhrases(self):
+        if self._phrases == None:
+            self._phrases = Phrases.forLanguage(self.getLanguage())
+        return self._phrases
 
     def number(self,phrase):
-        if Check.isInt(phrase): return phrase
-        return self._phrases.toNumber(phrase)
+        return self._getPhrases().toNumber(Check.toString(phrase))
 
     def phrase(self,number):
-        if Check.isString(number): return number
-        return self._phrases.toPhrase(number)
+        return self._getPhrases().toPhrase(Check.toInt(number))
 
     def getSecret(self):
         return self.phrase(self._shamir.getSecret())
+
     def setSecret(self,value):
-            self._shamir.setSecret(self.number(value))
+            self._getShamir().setSecret(self.number(value))
     def getKey(self,index):
-        index = Check.toInt(index,"index",1,self._shamir.getShares())
-        return self.phrase(self._shamir.getKey(index))
+        index = Check.toInt(index,"index",1,self.getShares())
+        return self.phrase(self._getShamir().getKey(index))
 
     def setKey(self,index,value):
-        index = Check.toInt(index,"index",1,self._shamir.getShares())        
-        self._shamir.setKey(self.number(value))
+        index = Check.toInt(index,"index",1,self.getShares())
+        self._getShamir().setKey(index,self.number(value))
 
     def randomize(self):
-        self._shamir.setRandomSecret()
-        self._shamir.makeKeys()
+        self._getShamir().setRandomSecret()
+        self._getShamir().makeKeys()
 
     def recover(self):
-        self._shamir.recoverKeys()
+        self._getShamir().recoverKeys()
 
     def dump(self):
-        print ("secret: " + self.getSecret())
+        prime = self.getPrime()
+        shares = self.getShares()
+        minimum = self.getMinimum()
+        language = self.getLanguage()
+
+        print ("--language=%s" % language)
+        print ("--prime=%d" % prime)
+        print ("--minimum=%d" % minimum)
+        print ("--shares=%d" % shares)
+        print ("--secret=\"%s\"" % self.getSecret())
         for i in range(1,self.getShares()+1):
-            print ("key#" + str(i) + ": " + self.getKey(i))
-        print ("Secret can be recovered with any " + str(self.getMinimum()) + " of the " + str(self.getShares()) + " keys.")
-        print ("Remember the key number (#1-#" + str(self.getShares()) + ") and phrase.")
+            print ("--key%d/%d=\"%s\"" % (i,shares,self.getKey(i)))
+        print ("Secret can be recovered with any %d of the %d keys" % (minimum, shares))
+        print ("Remember the key id (1/%d-%d/%d) and phrase." % (shares,shares,shares))
+
+    def cli(self,args):
+        for i in range(len(args)):
+            arg=args[i]
+
+            cmd="--language"
+            if arg == cmd: print(self.getLanguage())
+            if arg.startswith(cmd+"="): self.setLanguage(arg[len(cmd)+1:])
+
+            cmd="--minimum"
+            if arg == cmd: print(self.getMinimum())
+            if arg.startswith(cmd+"="): self.setMinimum(arg[len(cmd)+1:])
+
+            cmd="--shares"
+            if arg == cmd: print(self.getShares())
+            if arg.startswith(cmd+"="): self.setShares(arg[len(cmd)+1:])
+
+            cmd="--prime"
+            if arg == cmd: print(self.getPrime())
+            if arg.startswith(cmd+"="): self.setPrime(arg[len(cmd)+1:])
+
+            cmd="--bits"
+            if arg.startswith(cmd+"="): self.setBits(arg[len(cmd)+1:])
+
+            cmd="--secret"
+            if arg == cmd: print(self._getSecret())
+            if arg.startswith(cmd+"="): self.setSecret(arg[len(cmd)+1:])
+
+            for index in range(1,self.getShares()+1):
+                cmd="--key"+str(index)+"/"+str(self.getShares())
+                if arg == cmd: 
+                    print(self.getKey(index))
+                if arg.startswith(cmd+"="): 
+                    self.setKey(index,arg[len(cmd)+1:])
+
+            cmd="--randomize"
+            if arg == cmd: self.randomize()
+            cmd="--recover"
+            if arg == cmd: self.recover()
+            cmd="--dump"
+            if arg == cmd: self.dump()
 
 def main():
     brainWallet=BrainWallet()
-    brainWallet.randomize()
-    brainWallet.dump()
+    brainWallet.cli(sys.argv[1:])
 
 if __name__ == "__main__":
     main()
