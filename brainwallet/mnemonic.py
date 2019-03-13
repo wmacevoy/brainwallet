@@ -28,8 +28,7 @@ import itertools
 import os
 import sys
 import unicodedata
-
-# from pbkdf2 import PBKDF2
+from pbkdf2 import PBKDF2
 
 PBKDF2_ROUNDS = 2048
 

@@ -1,10 +1,15 @@
 #!/usr/bin/env python
 
 import sys
+import binascii
 from shamir import Shamir
 from phrases import Phrases
 from check import Check
+from mnemonic import Mnemonic
+from pbkdf2 import PBKDF2
 from rng import RNG
+import hashlib
+import hmac
 
 class BrainWallet:
     DEFAULT_MINIMUM = 2
@@ -116,6 +121,83 @@ class BrainWallet:
     def recover(self):
         self._getShamir().recoverKeys()
 
+    def seed1(self,salt = ""):
+        return Mnemonic.to_seed(self.getSecret(),salt)
+
+    PBKDF2_ROUNDS = 2048
+    def seed2(self,salt = ""):
+        return PBKDF2(
+            self.getSecret(),
+            u"mnemonic" + salt,
+            iterations=self.PBKDF2_ROUNDS,
+            macmodule=hmac,
+            digestmodule=hashlib.sha512,
+        ).read(64)
+
+    def getSeed(self,salt = ""):
+        password=self.getSecret().encode("utf-8")
+        salt=(u"mnemonic" + salt).encode("utf-8")
+        iterations=self.PBKDF2_ROUNDS
+        stretched = hashlib.pbkdf2_hmac('sha512', password, salt, iterations)
+        return stretched[0:64]
+
+    def getCheckedSeed(self,passphrase = ""):
+        s1=self.seed1(passphrase)
+        s2=self.seed2(passphrase)
+        s=self.getSeed(passphrase)
+        assert s1 == s
+        assert s2 == s
+        return s
+
+    # Refactored code segments from <https://github.com/keis/base58>
+    B58_ALPHABET="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
+
+    @classmethod
+    def b58encode(cls,data):
+        p = 1
+        acc = 0
+        for c in reversed(data):
+            if not Check.PYTHON3:
+                c = ord(c)
+            acc += p * c
+            p = p << 8
+
+        string = ""
+        while acc:
+            acc, idx = divmod(acc, 58)
+            string = cls.B58_ALPHABET[idx : idx + 1] + string
+        return string
+
+    @classmethod
+    def getCheckedHDMasterKey(cls,seed):
+        key1 = Mnemonic.to_hd_master_key(seed)
+        key = cls.getHDMasterKey(seed)
+        assert key == key1
+        return key
+
+    @classmethod
+    def getHDMasterKey(cls,seed):
+        if len(seed) != 64:
+            raise ValueError("Provided seed should have length of 64")
+
+        seed = hmac.new(b"Bitcoin seed", seed, digestmod=hashlib.sha512).digest()
+
+        # Serialization format can be found at: https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki#Serialization_format
+        xprv = b"\x04\x88\xad\xe4"  # Version for private mainnet
+        xprv += b"\x00" * 9  # Depth, parent fingerprint, and child number
+        xprv += seed[32:]  # Chain code
+        xprv += b"\x00" + seed[:32]  # Master key
+
+        # Double hash using SHA256
+        hashed_xprv = hashlib.sha256(xprv).digest()
+        hashed_xprv = hashlib.sha256(hashed_xprv).digest()
+
+        # Append 4 bytes of checksum
+        xprv += hashed_xprv[:4]
+
+        # Return base58
+        return cls.b58encode(xprv)
+
     def dump(self):
         prime = self.getPrime()
         shares = self.getShares()
@@ -156,7 +238,7 @@ class BrainWallet:
             if arg.startswith(cmd+"="): self.setBits(arg[len(cmd)+1:])
 
             cmd="--secret"
-            if arg == cmd: print(self._getSecret())
+            if arg == cmd: print(self.getSecret())
             if arg.startswith(cmd+"="): self.setSecret(arg[len(cmd)+1:])
 
             for index in range(1,self.getShares()+1):
@@ -172,6 +254,14 @@ class BrainWallet:
             if arg == cmd: self.recover()
             cmd="--dump"
             if arg == cmd: self.dump()
+            cmd="--seed"
+            if arg == cmd: 
+                print (binascii.hexlify(self.getCheckedSeed()))
+            cmd="--master"
+            if arg == cmd: 
+                seed = self.getCheckedSeed()
+                key = self.getCheckedHDMasterKey(seed)
+                print (key)
 
 def main():
     brainWallet=BrainWallet()
@@ -179,4 +269,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
