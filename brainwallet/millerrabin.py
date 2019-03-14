@@ -11,6 +11,22 @@ class MillerRabin:
         self.trials = trials
         self.rng = rng
 
+    def nextPrime(self,n):
+        while True:
+            n = n + 1
+            if self.isProbablyPrime(n):
+                break
+        return n
+
+    def prevPrime(self,n):
+        if n <= 2:
+            raise ValueError("no previous prime")
+        while True:
+            n = n - 1
+            if self.isProbablyPrime(n):
+                break
+        return n
+
     def isProbablyPrime(self,n):
         """
         Miller-Rabin primality test.
@@ -26,30 +42,33 @@ class MillerRabin:
 
         if n<2:
             return False
- 
-        if n==2 or n==3 or n==5:
+
+        if n==2 or n==3 or n==5 or n==7:
             return True
 
-        if n % 2 == 0 or n % 3 == 0 or n % 5 == 0:
+        if n % 2 == 0 or n % 3 == 0 or n % 5 == 0 or n % 7 == 0:
             return False
     
         # write n-1 as (2**s)*d
-        s = 0
+        r = 0
         d = n-1
         while d%2==0:
             d>>=1
-            s+=1
+            r+=1
 
+        A=2
+        B=n-2
         for trial in xrange(self.trials):
-            a = self.rng.next(n-2)+2 # [2,n-1]
+            a = A+self.rng.next(B-A+1) # [A,B]
             x = pow(a, d, n)
             if x == 1 or x == n-1: continue
-            prove = False
-            for r in range(1,s):
-                x=pow(x,2,n)
-                prove = (x == 1)
-                if prove or x == n-1: break
-            if prove:
+            composite = True
+            for i in range(r-1):
+                x = x**2 % n
+                if x == n-1:
+                    composite = False
+                    break
+            if composite:
                 return False
         return True
 
