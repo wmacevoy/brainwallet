@@ -36,7 +36,7 @@ class Shamir:
         name="key" if index > 0 else "secret"
         self._keys[index] = None
 
-    def setRandomSecret(self):
+    def randomizeSecret(self):
         self.setSecret(self._rng.next(self._prime))
 
     def setSecret(self,secret):
@@ -51,7 +51,7 @@ class Shamir:
     def getSecret(self):
         return self.getKey(0)
 
-    def makeKeys(self):
+    def randomizeKeys(self):
         if self._keys[0] == None:
             raise ValueError("secret must be set")
         secret=self._keys[0]
