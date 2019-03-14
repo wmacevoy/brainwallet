@@ -17,16 +17,18 @@ class Phrases:
     def _getDirectory(cls):
         return os.path.join(os.path.dirname(__file__), "wordlist")
 
+    _LANGUAGES=None
     @classmethod
     def getLanguages(cls):
-        languages=[]
-        suffix=".txt"
-        for filename in os.listdir(cls._getDirectory()):
-            if filename.endswith(suffix):
-                language=Check.toString(filename[:-len(suffix)])
-                languages.append(language)
-        return languages
-
+        if cls._LANGUAGES == None:
+            languages=[]
+            suffix=".txt"
+            for filename in os.listdir(cls._getDirectory()):
+                if filename.endswith(suffix):
+                    language=Check.toString(filename[:-len(suffix)])
+                    languages.append(language)
+            cls._LANGUAGES=languages
+        return cls._LANGUAGES
 
     @classmethod
     def _getFilename(cls,language):
@@ -40,41 +42,45 @@ class Phrases:
             file = open(filename,"r",encoding="utf-8")
         else:
             file = open(filename,"r")
-        words = [Check.toString(word).strip() for word in file.readlines()]
 
-        words.sort()
+        words = []
+        for word in file.readlines():
+            word=Check.toString(word)
+            comment = word.rfind("#")
+            if comment >= 0:
+                word=word[0:comment]
+            words.extend(cls.toList(word))
+
+        invWords = dict()
+        for i in range(len(words)):
+            if words[i] in invWords:
+                raise ValueError("duplicate word " + words[i])
+            invWords[words[i]]=i
 
         if len(words)<2: 
             raise ValueError("too few words")
-        for i in range(len(words)):
-            if len(words[i])==0: 
-                raise ValueError("empty word")
-            if i > 0 and words[i] == words[i-1]: 
-                raise ValueError("duplicate word")
-        return words
-
-    @classmethod
-    def invertWords(cls,words):
-        invWords=dict()
-        for i in range(len(words)):
-            invWords[words[i]]=i
-        return invWords
+        return (words,invWords)
 
     def __init__(self, language):
-        self.words = self.getWords(language)
-        self.invWords = self.invertWords(self.words)
         self.language = language
+        (self.words,self.invWords) = self.getWords(language)
         self.radix = len(self.words)
 
     @classmethod
-    def detectLanguage(cls, phrase):
+    def detectLanguages(cls, phrase):
+        detect=set()
         languages = cls.getLanguages()
 
         for lang in cls.getLanguages():
             phrases = cls.forLanguage(lang)
             if phrases.isPhrase(phrase):
-                return lang
+                detect.add(lang)
+        return detect
 
+    def detectLanguage(cls, phrase):
+        detect = cls.detectLanguages(phrase)
+        if len(detect)==1:
+            return detect.pop()
         raise ConfigurationError("Language not detected")
 
     def space(self):
@@ -83,7 +89,8 @@ class Phrases:
         else:
             return u" "
 
-    def toList(self,_value):
+    @classmethod
+    def toList(cls,_value):
         value=_value
         if not isinstance(value,list):
             value = re.split(u"[ \u3000\r\n\t]+",value,flags=re.UNICODE)
@@ -135,16 +142,6 @@ class Phrases:
         phrase=self.space().join(words)
         return phrase
         
-def test():
-    phrases = Phrases("test")
-    known = dict()
-    for i in xrange(0,100000):
-        words=phrases.toPhrase(i)
-        number=phrases.toNumber(words)
-        assert not words in known, "collision " + str(words)
-        assert i == number, "missed " + str(words)
-        known[words]=number
-
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'test':
         test()
