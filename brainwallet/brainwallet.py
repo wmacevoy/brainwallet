@@ -187,9 +187,9 @@ class BrainWallet:
         print ("--prime=%d" % prime)
         print ("--minimum=%d" % minimum)
         print ("--shares=%d" % shares)
-        print ("--secret=\"%s\"" % self.getSecret())
+        print ("--secret=\"%s\"" % self.getSecret().encode('utf-8'))
         for i in range(1,self.getShares()+1):
-            print ("--key%d=\"%s\"" % (i,self.getKey(i)))
+            print ("--key%d=\"%s\"" % (i,self.getKey(i).encode('utf-8')))
         print ("Secret can be recovered with any %d of the %d keys" % (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
