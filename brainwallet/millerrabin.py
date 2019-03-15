@@ -7,7 +7,7 @@ import math
 from rng import RNG
 
 class MillerRabin:
-    def __init__(self,trials=10,rng=RNG()):
+    def __init__(self,trials=64,rng=RNG()):
         self.trials = trials
         self.rng = rng
 

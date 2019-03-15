@@ -5,63 +5,50 @@ from check import Check
 
 
 class Shamir:
-    def __init__(self, minimum, shares,prime,rng=RNG()):
-        shares = Check.toInt(shares,"shares",1)
-        minimum = Check.toInt(minimum,"minimum",1,shares)
+    def __init__(self, minimum, prime):
+        minimum = Check.toInt(minimum,"minimum",1)
         prime = Check.toPrime(prime)
 
-        self._rng = rng
         self._minimum = minimum
-        self._shares = shares
         self._prime = prime
-        self._keys = [None]*(self._shares+1)
+        self._keys = dict()
 
     def getMinimum(self):
         return self._minimum
-
-    def getShares(self):
-        return self._shares
 
     def getPrime(self):
         return self._prime
 
     def setKey(self,index,key):
-        index=Check.toInt(index,"index",0,self._shares)
+        index=Check.toInt(index,"index",0)
         name="key" if index > 0 else "secret"
         key=Check.toInt(key,name,0,self._prime-1)
         self._keys[index] = key
 
-    def clearKey(self,index):
-        index=Check.toInt(index,"index",0,self._shares)
-        name="key" if index > 0 else "secret"
-        self._keys[index] = None
-
-    def randomizeSecret(self):
-        self.setSecret(self._rng.next(self._prime))
+    def randomizeSecret(self,rng=RNG()):
+        self.setSecret(rng.next(self._prime))
 
     def setSecret(self,secret):
         self.setKey(0,secret)
 
-    def getKey(self,index):
-        index=Check.toInt(index,"index",0,self._shares)
-        if self._keys[index] == None:
-            self.recoverKeys()
-        return self._keys[index]
-
     def getSecret(self):
         return self.getKey(0)
 
-    def randomizeKeys(self):
+    def randomizeKeys(self,shares,rng=RNG()):
+        shares = Check.toInt(shares,"shares",self._minimum)
+
         if self._keys[0] == None:
             raise ValueError("secret must be set")
         secret=self._keys[0]
+        
 
         cs = [0 for i in range(self._minimum)]
         cs[0]=secret
         for i in range(1,self._minimum):
-            cs[i]=self._rng.next(self._prime)
+            cs[i]=rng.next(self._prime)
+        self._keys = dict()
         self._keys[0]=secret
-        for i in range(1,self._shares+1):
+        for i in range(1,shares+1):
             self._keys[i]=self._evalPoly(cs,i)
 
     def _evalPoly(self,cs, x):
@@ -129,49 +116,18 @@ class Shamir:
                for i in range(k)])
         return self._divmod(num, den)
 
-    def recoverKeys(self):
-        xs=[]
-        ys=[]
-        x=0
-        for key in self._keys:
-            if key != None:
+    def getKey(self,index):
+        index = Check.toInt(index,"index",0)
+        if not index in self._keys:
+            xs=[]
+            ys=[]
+            for x in self._keys:
                 xs.append(x)
-                ys.append(key)
+                ys.append(self._keys[x])
                 if len(xs) == self._minimum: break
-            x+=1
-        if len(xs) < self._minimum:
-            raise ValueError("insufficient keys")
 
-        for i in xrange(0,self._shares+1):
-            if self._keys[i] == None:
-                self._keys[i]=self._lagrangeInterpolate(i,xs,ys)
+            if len(xs) < self._minimum:
+                raise ValueError("only %d of minimum %s keys" % (len(xs),self._minumum))
 
-def main():
-    prime = 2**256 - 2**32 - 2**9 - 2**8 - 2**7 - 2**6 - 2**4 - 1
-    rng=RNG()
-    for shares in range(1,9):
-        for minimum in range(1,shares+1):
-            for secret in [0,1,2,rng.next(prime),prime-2,prime-1]:
-                shamir = Shamir(minimum,shares,prime)
-                shamir.setSecret(secret)
-                assert shamir.getSecret() == secret, "before make keys"
-                shamir.makeKeys()
-                assert shamir.getSecret() == secret, "after make keys"
-                keys=[shamir.getKey(i) for i in range(shares+1)]
-                for tests in range(100):
-                    shamir1 = Shamir(minimum,shares,prime)
-                    choices=list(range(1,shares+1))
-                    for k in range(minimum):
-                        i=rng.next(len(choices))
-                        shamir1.setKey(choices[i],keys[choices[i]])
-                        del choices[i]
-
-                    shamir1.recoverKeys()
-
-                    keys1=[shamir1.getKey(i) for i in range(shares+1)]
-                    if keys1 != keys:
-                        print (str(keys1) + " != " + str(keys))
-                        raise ValueError("test failed.")
-
-if __name__ == '__main__':
-    main()
+            self._keys[index]=self._lagrangeInterpolate(index,xs,ys)
+        return self._keys[index]

@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import inspect,math,os,sys,unittest
 
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))

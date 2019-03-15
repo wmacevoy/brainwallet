@@ -1,34 +1,19 @@
 #!/usr/bin/env python
 
-import sys
-import binascii
+import binascii,hashlib,hmac,math,sys
+
 from shamir import Shamir
 from phrases import Phrases
 from check import Check
 from mnemonic import Mnemonic
 from pbkdf2 import PBKDF2
 from rng import RNG
-import hashlib
-import hmac
+from millerrabin import MillerRabin
 
 class BrainWallet:
-    # primes slightly larger than a power of 2
-    BIGGER_PRIMES={128:2**128+51,
-                160:2**160+7,
-                192:2**192+133,
-                224:2**224+735,
-                256:2**256+297}
-
-    # primes slightly smaller than a power of 2
-    SMALLER_PRIMES={128:2**128-159,
-                  160:2**160-47,
-                  192:2**192-237,
-                  224:2**224-63,
-                  256:2**256-189}
-
     DEFAULT_MINIMUM = 2
     DEFAULT_SHARES  = 4
-    DEFAULT_PRIME = SMALLER_PRIMES[128]
+    DEFAULT_PRIME = 2**128-159
     DEFAULT_LANGUAGE = "english"
 
     def __init__(self):
@@ -36,41 +21,33 @@ class BrainWallet:
         self._shares = None
         self._prime = None
         self._language = None
-        self._shamir = None
-        self._phrases = None
-        self._secret = None
+        self._keys = dict()
+        self._millerRabin = MillerRabin()
 
     def getMinimum(self):
         return self._minimum if self._minimum != None else self.DEFAULT_MINIMUM
+
     def setMinimum(self,value):
-        if self._shamir != None:
-            raise ValueError("shamir already configured")
-        if self._minimum != None:
-            raise ValueError("minimum already set")
         self._minimum = Check.toInt(value,"minimum",1)
 
     def getShares(self):
-        return self._shares if self._shares != None else self.DEFAULT_SHARES
+        if self._shares != None: return self._shares
+        shares = self.getMinimum()+2
+        for index in self._keys:
+            if index > shares: shares = index
+        return shares
 
     def setShares(self,value):
-        if self._shamir != None:
-            raise ValueError("shamir already configured")
-        if self._shares != None:
-            raise ValueError("shares already set")
         self._shares = Check.toInt(value,"shares",1)
         
     def getPrime(self):
         return self._prime if self._prime != None else self.DEFAULT_PRIME
 
     def setBits(self,bits):
-        bits=Check.toInt(bits,"bits",128,256)
-        self.setPrime(self.SMALLER_PRIMES[bits])
+        bits=Check.toInt(bits,"bits",96,256)
+        self.setPrime(sefl._millerRabin.prevPrime(2**bits))
 
-    def setPrime(self,value):
-        if self._shamir != None:
-            raise ValueError("shamir already configured")
-        if self._prime != None:
-            raise ValueError("prime already set")
+    def setPrime(self,prime):
         self._prime = Check.toPrime(value)
 
     def getLanguage(self):
@@ -83,66 +60,69 @@ class BrainWallet:
         self._language = language
 
     def _getShamir(self):
-        if self._shamir == None:
-            self._shamir = Shamir(self.getMinimum(),self.getShares(),self.getPrime())
-            if self._secret != None:
-                self._shamir.setSecret(self._secret)
-        return self._shamir
+        shamir = Shamir(self.getMinimum(),self.getPrime())
+        for i in self._keys:
+            shamir.setKey(i,self._keys[i])
+        return shamir
 
     def _getPhrases(self):
         return Phrases.forLanguage(self.getLanguage())
 
     def number(self,phrase):
-        phrase=Check.toString(phrase)
-        if self._getPhrases().isPhrase(phrase):
-            return self._getPhrases().toNumber(phrase)
-        else:
-            detected=Phrases.detectLanguage(phrase)
-            return Phrases.forLanguage(detected).toNumber(phrase)
-                
+        phrase = Check.toString(phrase)
+        phrases = self._getPhrases()
+        if phrases.isPhrase(phrase): 
+            return phrases.toNumber(phrase)
+
+        detects=Phrases.detectLanguages(phrase)
+        if len(detects) > 0:
+            return Phrases.forLanguage(detects.pop()).toNumber(phrase)
+
+        raise ValueError("unknown phrase language")
+
     def phrase(self,number):
-        return self._getPhrases().toPhrase(Check.toInt(number))
+        number = Check.toInt(number)
+        return self._getPhrases().toPhrase(number)
 
     def getSecret(self):
-        if self._shamir != None:
-            return self.phrase(self._getShamir().getSecret())
-        elif self._secret != None:
-            return self._secret
-        else:
-            raise ValueError("secret and recovery keys are not set")
+        return self.getKey(0)
 
-    def setSecret(self,value):
-        self._secret = value
-        if self._shamir != None:
-            self._getShamir().setSecret(self.number(value))
+    def setSecret(self,phrase):
+        self.setKey(0,phrase)
 
     def getKey(self,index):
-        index = Check.toInt(index,"index",1,self.getShares())
-        return self.phrase(self._getShamir().getKey(index))
+        name = "index" if index > 0 else "secret"
+        index = Check.toInt(index,name,0)
+        if not index in self._keys:
+            self._keys[index] = self._getShamir().getKey(index)
+        return self.phrase(self._keys[index])
 
-    def setKey(self,index,value):
-        index = Check.toInt(index,"index",1,self.getShares())
-        self._getShamir().setKey(index,self.number(value))
+    def setKey(self,index,phrase):
+        name = "index" if index > 0 else "secret"
+        index = Check.toInt(index,name)
+        self._keys[index] = self.number(phrase)
 
     def randomize(self):
-        self._getShamir().setRandomSecret()
-        self._getShamir().makeKeys()
+        self.randomizeSecret()
+        self.randomizeKeys()
 
-    def recover(self):
-        self._getShamir().recoverKeys()
+    def randomizeSecret(self):
+        shamir = self._getShamir()
+        shamir.randomizeSecret()
+        self._keys=dict()
+        self._keys[0] = shamir.getSecret()
 
-    def seed1(self,salt = ""):
-        return Mnemonic.to_seed(self.getSecret(),salt)
-
-    PBKDF2_ROUNDS = 2048
-    def seed2(self,salt = ""):
-        return PBKDF2(
-            self.getSecret(),
-            u"mnemonic" + salt,
-            iterations=self.PBKDF2_ROUNDS,
-            macmodule=hmac,
-            digestmodule=hashlib.sha512,
-        ).read(64)
+    def randomizeKeys(self):
+        if not 0 in self._keys:
+            raise ValueError("secret must be set")
+        secret = self._keys[0]
+        shares = self.getShares()
+        shamir = self._getShamir()
+        shamir.randomizeKeys(shares)
+        self._keys = dict()
+        self._keys[0] = secret
+        for index in range(1,shares+1):
+            self._keys[index] = shamir.getKey(index)
 
     def getSeed(self,salt = ""):
         password=self.getSecret().encode("utf-8")
@@ -150,14 +130,6 @@ class BrainWallet:
         iterations=self.PBKDF2_ROUNDS
         stretched = hashlib.pbkdf2_hmac('sha512', password, salt, iterations)
         return stretched[0:64]
-
-    def getCheckedSeed(self,passphrase = ""):
-        s1=self.seed1(passphrase)
-        s2=self.seed2(passphrase)
-        s=self.getSeed(passphrase)
-        assert s1 == s
-        assert s2 == s
-        return s
 
     # Refactored code segments from <https://github.com/keis/base58>
     B58_ALPHABET="123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
@@ -177,13 +149,6 @@ class BrainWallet:
             acc, idx = divmod(acc, 58)
             string = cls.B58_ALPHABET[idx : idx + 1] + string
         return string
-
-    @classmethod
-    def getCheckedHDMasterKey(cls,seed):
-        key1 = Mnemonic.to_hd_master_key(seed)
-        key = cls.getHDMasterKey(seed)
-        assert key == key1
-        return key
 
     @classmethod
     def getHDMasterKey(cls,seed):
@@ -210,17 +175,21 @@ class BrainWallet:
 
     def dump(self):
         prime = self.getPrime()
+        bits = int(math.ceil(math.log(prime,2)))
+        if (self._millerRabin.prevPrime(2**bits) != prime): bits = None
         shares = self.getShares()
         minimum = self.getMinimum()
         language = self.getLanguage()
 
         print ("--language=%s" % language)
+        if bits != None:
+            print ("--bits=%d" % bits)
         print ("--prime=%d" % prime)
         print ("--minimum=%d" % minimum)
         print ("--shares=%d" % shares)
         print ("--secret=\"%s\"" % self.getSecret())
         for i in range(1,self.getShares()+1):
-            print ("--key%d=\"%s\"" % (i,shares,self.getKey(i)))
+            print ("--key%d=\"%s\"" % (i,self.getKey(i)))
         print ("Secret can be recovered with any %d of the %d keys" % (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
@@ -260,8 +229,10 @@ class BrainWallet:
 
             cmd="--randomize"
             if arg == cmd: self.randomize()
-            cmd="--recover"
-            if arg == cmd: self.recover()
+            cmd="--randomizeSecret"
+            if arg == cmd: self.randomizeSecret()
+            cmd="--randomizeKeys"
+            if arg == cmd: self.randomizeKeys()
             cmd="--dump"
             if arg == cmd: self.dump()
             cmd="--seed"
@@ -269,8 +240,8 @@ class BrainWallet:
                 print (binascii.hexlify(self.getCheckedSeed()))
             cmd="--master"
             if arg == cmd: 
-                seed = self.getCheckedSeed()
-                key = self.getCheckedHDMasterKey(seed)
+                seed = self.getSeed()
+                key = self.getHDMasterKey(seed)
                 print (key)
 
 def main():
