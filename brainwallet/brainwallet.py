@@ -10,6 +10,8 @@ from pbkdf2 import PBKDF2
 from rng import RNG
 from millerrabin import MillerRabin
 
+PYTHON_VERSION = 2 if sys.version_info < (3,) else 3
+
 class BrainWallet:
     DEFAULT_MINIMUM = 2
     DEFAULT_SHARES  = 4
@@ -125,8 +127,12 @@ class BrainWallet:
             self._keys[index] = shamir.getKey(index)
 
     def getSeed(self,salt = ""):
-        password=self.getSecret().encode("utf-8")
-        salt=(u"mnemonic" + salt).encode("utf-8")
+        if PYTHON_VERSION == 2:
+            password=self.getSecret().encode("utf-8")
+            salt=(u"mnemonic" + salt).encode("utf-8")
+        else:
+            password=self.getSecret()
+            salt=(u"mnemonic" + salt)
         iterations=self.PBKDF2_ROUNDS
         stretched = hashlib.pbkdf2_hmac('sha512', password, salt, iterations)
         return stretched[0:64]
@@ -187,9 +193,15 @@ class BrainWallet:
         print ("--prime=%d" % prime)
         print ("--minimum=%d" % minimum)
         print ("--shares=%d" % shares)
-        print ("--secret=\"%s\"" % self.getSecret().encode('utf-8'))
+        if PYTHON_VERSION == 2:
+            print ("--secret=\"%s\"" % self.getSecret().encode('utf-8'))
+        else:
+            print ("--secret=\"%s\"" % self.getSecret())
         for i in range(1,self.getShares()+1):
-            print ("--key%d=\"%s\"" % (i,self.getKey(i).encode('utf-8')))
+            if PYTHON_VERSION == 2:
+                print ("--key%d=\"%s\"" % (i,self.getKey(i).encode('utf-8')))
+            else:
+                print ("--key%d=\"%s\"" % (i,self.getKey(i)))
         print ("Secret can be recovered with any %d of the %d keys" % (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
@@ -217,13 +229,19 @@ class BrainWallet:
             if arg.startswith(cmd+"="): self.setBits(arg[len(cmd)+1:])
 
             cmd="--secret"
-            if arg == cmd: print(self.getSecret().encode('utf-8'))
+            if PYTHON_VERSION == 2:
+                if arg == cmd: print(self.getSecret().encode('utf-8'))
+            else:
+                if arg == cmd: print(self.getSecret())
             if arg.startswith(cmd+"="): self.setSecret(arg[len(cmd)+1:])
 
             for index in range(1,self.getShares()+1):
                 cmd="--key"+str(index)
                 if arg == cmd: 
-                    print(self.getKey(index).encode('utf-8'))
+                    if PYTHON_VERSION == 2:
+                        print(self.getKey(index).encode('utf-8'))
+                    else:
+                        print(self.getKey(index))
                 if arg.startswith(cmd+"="): 
                     self.setKey(index,arg[len(cmd)+1:])
 
