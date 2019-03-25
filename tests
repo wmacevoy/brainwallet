@@ -1,0 +1,11 @@
+#!/bin/bash
+if [ "$(uname)" = "Linux" ]
+then
+  BRAINWALLET_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+else
+  BRAINWALLET_DIR="$(dirname "${BASH_SOURCE[0]}")"
+fi
+
+for test in $(ls "$BRAINWALLET_DIR/brainwallettest" | grep -E "*test.py$"); do
+	/usr/bin/env python "$BRAINWALLET_DIR/brainwallettest/$test";
+done 
