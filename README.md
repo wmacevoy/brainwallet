@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/wmacevoy/brainwallet.svg?branch=master)](https://travis-ci.org/wmacevoy/brainwallet)
+
 # Brain Wallet Tools
 
 Python tools for making brainwallet keys
