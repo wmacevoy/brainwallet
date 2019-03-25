@@ -7,5 +7,5 @@ else
 fi
 
 for test in $(ls "$BRAINWALLET_DIR/brainwallettest" | grep -E "*test.py$"); do
-	env $TRAVIS_PYTHON_VERSION "$BRAINWALLET_DIR/brainwallettest/$test";
+	env "python$TRAVIS_PYTHON_VERSION" "$BRAINWALLET_DIR/brainwallettest/$test";
 done 
