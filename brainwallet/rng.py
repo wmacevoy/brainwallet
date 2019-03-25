@@ -30,7 +30,7 @@ class RNG:
             data = self.source(bytes)
             k = 0
             for i in range(bytes):
-                bi = ord(data[i])
+                bi = ord(data[i:i+1])
                 k = k | (bi << (8*i))
             k = k & mask
             if k < n: return k
@@ -38,7 +38,7 @@ class RNG:
 def main():
     rng = RNG()
     for i in range(1,len(sys.argv)):
-        print rng.next(int(sys.argv[i]))
+        print(rng.next(int(sys.argv[i])))
 
 if __name__ == "__main__":
     main()
