@@ -58,7 +58,7 @@ class MillerRabin:
 
         A=2
         B=n-2
-        for trial in xrange(self.trials):
+        for trial in range(self.trials):
             a = A+self.rng.next(B-A+1) # [A,B]
             x = pow(a, d, n)
             if x == 1 or x == n-1: continue
@@ -77,7 +77,7 @@ def main():
     for i in xrange(1,len(sys.argv)):
         x = int(sys.argv[i])
         q = mr.isProbablyPrime(x)
-        print "prime(" + str(x) +")=" + str(q)
+        print("prime(" + str(x) +")=" + str(q))
 
 if __name__ == "__main__":
     main()
