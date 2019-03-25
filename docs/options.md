@@ -2,11 +2,11 @@
 
 `--bits=(128|160|192|224|256)` Default to 128.  Use the largest prime less than 2**bits for the Shamir secret sharing.  This actually sets the prime number, so this is a write-only parameter.
 
-`--minimum[=#]` Default 2. Minimum number of share keys to recover secret.
+`--minimum[=#]` Minimum number of share keys to recover secret. **Default** 2. **#** >= 1
 
-`--shares[=#]` Default 4. Number of share keys (must be >= minimum) to generate.
+`--shares[=#]` Number of share keys to generate. **Default** 4. **#** >= **minimum**
 
-`--prime[=#]` Default 2**128-159. Prime to use for secret sharing.
+`--prime[=#]` Prime to use for secret sharing. **Default** 2<sup>128</sup>-159.
 
 `--language[=wordlist]`  Default english.  Use given wordlist for dictionary.
 
