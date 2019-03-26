@@ -2,7 +2,7 @@ CXXFLAGS=-pthread -g -O -std=c++14 -I/usr/local/include -L/usr/local/lib
 LDFLAGS=-lntl -lgmp
 SHELL=/bin/bash
 
-all : irreducible.py
+all : gPrimitivePolysCondensed.py
 
 irreducible : irreducible.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
@@ -39,6 +39,6 @@ gmp :
 		/bin/rm -rf "$$F"; \
 	fi
 
-irreducible.py : Dockerfile Makefile irreducible.cpp ntl gmp
+gPrimitivePolysCondensed.py : Dockerfile Makefile irreducible.cpp ntl gmp
 	docker build -t irreducible-ntl .
-	docker run --rm -t irreducible-ntl > irreducible.py
+	docker run --rm -t irreducible-ntl > gPrimitivePolysCondensed.py
