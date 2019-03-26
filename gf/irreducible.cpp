@@ -9,15 +9,14 @@ using namespace NTL;
 int main()
 {
   const long maxBits = 1024;
-  std::cout << "SPARSE_IRREDUCIBLE_GF2X = [" << std::endl;
-  std::cout << "    ()," << std::endl;
-  std::cout << "    ()," << std::endl;
+  std::cout << "gPrimitivePolysCondensed = {" << std::endl;
+  std::cout << "    1 : (1,0), # x+1" << std::endl;
   for (long bits = 2; bits <= maxBits; ++bits) {
     GF2X poly;
     BuildSparseIrred(poly,bits);
     long d = deg(poly);
 
-    std::cout << "    (" << d;
+    std::cout << "    " << d << " : (" << d;
     for (long k = d-1; k >= 0; --k) {
       GF2 c = coeff(poly,k);
       if (IsOne(c)) { std::cout << "," << k; }
@@ -40,5 +39,5 @@ int main()
     }
     std::cout << std::endl;
   }
-  std::cout << "]" << std::endl;
+  std::cout << "} # gPrimitivePolysCondensed" << std::endl;
 }
