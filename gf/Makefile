@@ -1,12 +1,15 @@
 CXXFLAGS=-pthread -g -O -std=c++14 -I/usr/local/include -L/usr/local/lib
 LDFLAGS=-lntl -lgmp
 SHELL=/bin/bash
+
+all : irreducible.py
+
 irreducible : irreducible.cpp
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
-.PHONY: ntl-11.3.2.tar.gz
-ntl-11.3.2.tar.gz :
-	F="$@"; \
+.PHONY: ntl
+ntl :
+	F="ntl-11.3.2.tar.gz"; \
 	if [ "$$(test ! -f "$$F" && echo "missing" || openssl dgst -sha256 "$$F")" != "$$(cat "$$F.sha256")" ] ; \
 	then \
 		echo "downloading $$F..."; \
@@ -20,9 +23,9 @@ ntl-11.3.2.tar.gz :
 		/bin/rm -rf "$$F"; \
 	fi
 
-.PHONY: gmp-6.1.2.tar.xz
-gmp-6.1.2.tar.xz :
-	F="$@"; \
+.PHONY: gmp
+gmp : 
+	F="gmp-6.1.2.tar.xz"; \
 	if [ "$$(test ! -f "$$F" && echo "missing" || openssl dgst -sha256 "$$F")" != "$$(cat "$$F.sha256")" ] ; \
 	then \
 		echo "downloading $$F..."; \
@@ -36,6 +39,6 @@ gmp-6.1.2.tar.xz :
 		/bin/rm -rf "$$F"; \
 	fi
 
-irreducible.py : Dockerfile Makefile irreducible.cpp ntl-11.3.2.tar.gz gmp-6.1.2.tar.xz
+irreducible.py : Dockerfile Makefile irreducible.cpp ntl gmp
 	docker build -t irreducible-ntl .
 	docker run --rm -t irreducible-ntl > irreducible.py
