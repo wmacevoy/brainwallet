@@ -18,7 +18,6 @@ ntl :
 	if [ "$$(test ! -f "$$F" && echo "missing" || openssl dgst -sha256 "$$F")" == "$$(cat "$$F.sha256")" ] ; \
 	then \
 		echo "$$F up to date"; \
-		touch "$$F"; \
 	else \
 		/bin/rm -rf "$$F"; \
 	fi
@@ -34,7 +33,6 @@ gmp :
 	if [ "$$(test ! -f "$$F" && echo "missing" || openssl dgst -sha256 "$$F")" == "$$(cat "$$F.sha256")" ] ; \
 	then \
 		echo "$$F up to date"; \
-		touch "$$F"; \
 	else \
 		/bin/rm -rf "$$F"; \
 	fi
@@ -42,3 +40,9 @@ gmp :
 gPrimitivePolysCondensed.py : Dockerfile Makefile irreducible.cpp ntl gmp
 	docker build -t irreducible-ntl .
 	docker run --rm -t irreducible-ntl > gPrimitivePolysCondensed.py
+
+.PHONY: install
+install : ../brainwallet/gPrimitivePolysCondensed.py
+
+../brainwallet/gPrimitivePolysCondensed.py : gPrimitivePolysCondensed.py
+	cp $^ $@
