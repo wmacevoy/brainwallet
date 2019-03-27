@@ -11,12 +11,18 @@ For those wishing to use Docker to run the Brainwallet software, follow these st
 
 ### Build:
 
+Navigate to the brainwallet directory containing Dockerfile and in the command-line interface:
+
 **Run Once**
-`docker build -t brainwallet`
+```
+docker build -t brainwallet
+```
 
 ### Run:
 
-`docker run --rm -t brainwallet:latest bw <options>`
+```
+docker run --rm -t brainwallet:latest bw <options>
+```
 
 ## Example Usage
 
