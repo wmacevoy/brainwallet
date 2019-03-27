@@ -5,8 +5,6 @@ import binascii,hashlib,hmac,math,sys
 from shamir import Shamir
 from phrases import Phrases
 from check import Check
-from mnemonic import Mnemonic
-from pbkdf2 import PBKDF2
 from rng import RNG
 from millerrabin import MillerRabin
 
@@ -45,10 +43,10 @@ class BrainWallet:
 
     def setBits(self,bits):
         bits=Check.toInt(bits,"bits",96,256)
-        self.setPrime(sefl._millerRabin.prevPrime(2**bits))
+        self.setPrime(self._millerRabin.prevPrime(2**bits))
 
     def setPrime(self,prime):
-        self._prime = Check.toPrime(value)
+        self._prime = Check.toPrime(prime)
 
     def getLanguage(self):
         return self._language if self._language != None else self.DEFAULT_LANGUAGE
