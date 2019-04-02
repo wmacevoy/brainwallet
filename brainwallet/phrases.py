@@ -32,7 +32,7 @@ class Phrases:
 
     @classmethod
     def _getFilename(cls,language):
-        filename = "%s/%s.txt" % (cls._getDirectory(), language)
+        filename =  os.path.join(cls._getDirectory(), "%s.txt" % (language))
         return filename
 
     @classmethod
