@@ -12,20 +12,27 @@ cd $PSScriptRoot\brainwallet
 $env:PATH="$env:PATH%;$env:LocalAppData\Programs\Python\$PYTHON_VERSION\Scripts;C:\Program Files (x86)\Windows Kits\10\Redist\ucrt\DLLs\x64"
 
 # Test if pyinstaller is installed and install it if not
-pyinstaller --version > $null
+pyinstaller --version 2>&1 > $null
 
 if (-Not ($?)) {
-    py -m pip install pyinstaller
+    echo "Installing pyinstaller"
+    py -m pip install pyinstaller > $null
 }
 
 # Generate a Windows distribution
-pyinstaller brainwallet.py -y
+echo "Generating a spec"
+pyinstaller --onefile brainwallet.py > $null
 
-# Copy the wordlist into the brainwallet distribution directory
-Copy-Item -recurse "wordlist" -Destination "dist\brainwallet\wordlist"
+# Edit the spec to generate a binary containing all required libraries
+# and datafiles, and move the binary to the root of the repo
+echo "Editing spec and generating executable"
 
-# Make a zip in the root of the repo with the desired name
-Compress-Archive -Path ".\dist\brainwallet\*" -CompressionLevel Optimal -DestinationPath "..\$Release_Name" -Force
+(Get-Content .\brainwallet.spec) -replace "datas=\[],", "datas=[('wordlist\*', 'wordlist')]," | Set-Content ".\brainwallet.spec" -Encoding Default
+
+pyinstaller --onefile brainwallet.spec > $null
+
+Move-Item "dist\brainwallet.exe" -Destination "..\$Release_Name.exe" -Force > $null
 
 # Clean up remaining junk files from pyinstaller
-Remove-Item 'dist','build','brainwallet.spec' -Force -Recurse
+  echo "Cleaning up"
+  Remove-Item 'dist','build','brainwallet.spec' -Force -Recurse > $null
