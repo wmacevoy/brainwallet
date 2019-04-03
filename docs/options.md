@@ -69,7 +69,9 @@ Set/get recovery key, ex: --key2="..."
 
 `--randomize`
 Build random secret and recovery keys.
+
 ---
+
 `--recover`
 ***Currently under development (03/25/2019)***
 
