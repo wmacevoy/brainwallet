@@ -28,29 +28,29 @@ docker run --rm -t brainwallet:latest bw <options>
 
 > See the Options section of Creating Keys for more details.
 
-### Make a 2 out of 5 160 bit secret and recover key set:
+Make a 2 out of 5 160 bit secret and recover key set:
 
 ```bash
 bw --bits=160 --minimum=2 --shares=5 --randomize --dump
 ```
 
-### Recover secret and key 2 by providing keys 1 and 3:
+Recover secret and key 2 by providing keys 1 and 3:
 
 ```bash
 bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2
 ```
 
-### Generate HD master key from secret phrase.  DO NOT MAKE UP SECRET - generate it at random.
+Generate HD master key from secret phrase.  DO NOT MAKE UP SECRET - generate it at random.
 
 ```bash
 bw --secret "..." --master
 ```
 
-### Generate HD master from 2 shares:
+Generate HD master from 2 shares:
 ```bash
 bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --master
 ```
-### Get equivalent secrets in French
+Get equivalent secrets in French
 
 ```bash
 bw --bits=160 --minimum=2 --shares=5 --language=english --key1="(english)" --language=french --key1
