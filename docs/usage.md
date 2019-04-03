@@ -36,7 +36,7 @@ docker run --rm -t brainwallet:latest bw <options>
 
   `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2`
 
-+ Generate HD master key from secret phrase.  DO NOT MAKE UP SECRET - generate it at random.
++ Generate HD master key from secret phrase.  ***Do not "make up" secret*** - generate it at random.
 
   `bw --secret "..." --master`
 
