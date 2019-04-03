@@ -28,11 +28,10 @@ Number of share keys to generate.
 ```
 Prime to use for secret sharing.
 
-***Do not change this setting unless you know what you are doing.***
+> Do not change this setting unless you know what you are doing.
 + Default  = 2<sup>128</sup>-159.
 
-Modifying the prime for secrets without proper knowledge could comprimise your secret.
-
+> Modifying the prime for secrets without proper knowledge could comprimise your secret.
 Instead, use the `--bits` option to guarentee a prime number, otherwise:
 
 + **Recommended** any prime >= 2<sup>98</sup>-51
@@ -44,16 +43,15 @@ Instead, use the `--bits` option to guarentee a prime number, otherwise:
 ```
 Use given wordlist for dictionary.
 + Default = English
-
-*See [Languages](languages.md "Languages") section for supported languages.*
+ 
+> See [Languages](languages.md "Languages") section for supported languages. 
 
 ```
 --secret[="some long phrase"]
 ```
 Set/get secret phrase.
 
-***It is not recommended to "make up" your own phrase.***
-
+> It is not recommended to "make up" your own phrase.
 Either generate one from third-party software or create one using the Shamir algorithm or a separate algorithm.
 
 ```
@@ -63,7 +61,7 @@ Either generate one from third-party software or create one using the Shamir alg
 
 Set/get recovery key, ex: --key2="..."
 
-***Follow the same caution for recovery phrases as secret phrases***, as mentioned above.
+> Follow the same caution for recovery phrases as secret phrases, as mentioned above.
 
 ```
 --randomize
