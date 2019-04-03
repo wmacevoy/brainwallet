@@ -50,7 +50,9 @@ docker run --rm -t brainwallet:latest bw <options>
   
 > Key recovery phrases (NOT secrets) in different languages can be used interchangeably, and brainwallet will detect the language the phrase is in (or use --language before setting a key or secret for certainty).
 
-  ```bw --bits=160 --minimum=2 --shares=5 --key3="abeille garantir impérial écureuil radieux enfouir soleil ethnie empereur fluctuer tamiser aboutir digérer détourer tornade" --key1="ahead copper tonight naive finish rich afford grain swift true virus shrug access gate quantum" --secret```
+  ```
+  bw --bits=160 --minimum=2 --shares=5 --key3="abeille garantir impérial écureuil radieux enfouir soleil ethnie empereur fluctuer tamiser aboutir digérer détourer tornade" --key1="ahead copper tonight naive finish rich afford grain swift true virus shrug access gate quantum" --secret
+  ```
 
 ---
 
