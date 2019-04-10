@@ -31,28 +31,29 @@ docker run --rm -t brainwallet:latest bw <options>
 
 1. Make a 2 out of 5 160 bit secret and recover key set:
 
-  `bw --bits=160 --minimum=2 --shares=5 --randomize --dump`
+    `bw --bits=160 --minimum=2 --shares=5 --randomize --dump`
+
 2. Recover secret and key 2 by providing keys 1 and 3:
 
-  `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2`
+    `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2`
 
 3. Generate HD master key from secret phrase.  ***Do not "make up" secret*** - generate it at random.
 
-  `bw --secret "..." --master`
+    `bw --secret "..." --master`
 
 4. Generate HD master from 2 shares:
 
-  `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --master`
+    `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --master`
 
 5. Get equivalent secrets in French
 
-  `bw --bits=160 --minimum=2 --shares=5 --language=english --key1="(english)" --language=french --key1`
+    `bw --bits=160 --minimum=2 --shares=5 --language=english --key1="(english)" --language=french --key1`
 
 > Key recovery phrases (NOT secrets) in different languages can be used interchangeably, and brainwallet will detect the language the phrase is in (or use --language before setting a key or secret for certainty).
 
-  ```
-  bw --bits=160 --minimum=2 --shares=5 --key3="abeille garantir impérial écureuil radieux enfouir soleil ethnie empereur fluctuer tamiser aboutir digérer détourer tornade" --key1="ahead copper tonight naive finish rich afford grain swift true virus shrug access gate quantum" --secret
-  ```
+```
+bw --bits=160 --minimum=2 --shares=5 --key3="abeille garantir impérial écureuil radieux enfouir soleil ethnie empereur fluctuer tamiser aboutir digérer détourer tornade" --key1="ahead copper tonight naive finish rich afford grain swift true virus shrug access gate quantum" --secret
+```
 
 ---
 
