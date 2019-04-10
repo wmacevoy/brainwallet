@@ -27,11 +27,11 @@ docker run --rm -t brainwallet:latest bw <options>
 
 > See the Options section of Creating Keys for more details.
 
-<a name="one">
+<a name="one"></a>
+
 + Make a 2 out of 5 160 bit secret and recover key set:
 
   `bw --bits=160 --minimum=2 --shares=5 --randomize --dump`
-</a>
 + Recover secret and key 2 by providing keys 1 and 3:
 
   `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2`
