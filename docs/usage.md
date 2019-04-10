@@ -1,13 +1,12 @@
 # Usage
 
-The Brainwallet software is compatible with OS X and Linux operating systems and \
-WSL for Windows, using Python 2 or 3.
+The Brainwallet software is compatible with OS X and Linux operating systems and WSL for Windows, using Python 2 or 3.
 
 `./your/path/to/bw <options>`
 
 ## Docker
 
-For those wishing to use Docker to run the Brainwallet software, follow these steps:
+For those wishing to use Docker, ensure that Docker is running, and then follow these steps:
 
 ### Build:
 
@@ -43,11 +42,11 @@ docker run --rm -t brainwallet:latest bw <options>
 + Generate HD master from 2 shares:
 
   `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --master`
-  
+
 + Get equivalent secrets in French
 
   `bw --bits=160 --minimum=2 --shares=5 --language=english --key1="(english)" --language=french --key1`
-  
+
 > Key recovery phrases (NOT secrets) in different languages can be used interchangeably, and brainwallet will detect the language the phrase is in (or use --language before setting a key or secret for certainty).
 
   ```
