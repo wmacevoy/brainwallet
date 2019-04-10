@@ -32,7 +32,7 @@ Build random secret and recovery keys.
 `--dump`
 Create a summary dump of information.
 
-> See [Example 1](usage.md#L30-L32) for usage.
+> See [Example 1](usage.md#one) for usage.
 
 ---
 
