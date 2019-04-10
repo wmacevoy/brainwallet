@@ -33,9 +33,36 @@ docker run --rm -t brainwallet:latest bw <options>
 
     `bw --bits=160 --minimum=2 --shares=5 --randomize --dump`
 
+    ##### Output:
+
+    ```
+    2
+    4
+    --language=english
+    --bits=160
+    --prime=1461501637330902918203684832716283019655932542929
+    --minimum=2
+    --shares=4
+    --secret="always traffic bacon first crystal pistol sadness state visa misery degree nature fork glow mango"
+    --key1="aim runway obscure memory loan noise pause build about task gain toilet seven system slam"
+    --key2="adapt neither butter salmon speak mail luggage grit arrange common loop crowd come field auction"
+    --key3="absorb hello play velvet burden isolate habit question blossom learn pottery lucky nuclear solve fan"
+    --key4="alley dose coin cereal hobby group entire wear cat song social steel absent elevator move"
+    Secret can be recovered with any 2 of the 4 keys
+    Remember the key id (1-4) and corresponding phrase.
+    ```
+
+<a name="two"></a>
+
 2. Recover secret and key 2 by providing keys 1 and 3:
 
     `bw --bits=160 --minimum=2 --shares=5 --key1="..." --key3="..." --secret --key2`
+
+    ##### Output (using above keys):
+    ```
+    always traffic bacon first crystal pistol sadness state visa misery degree nature fork glow mango
+    adapt neither butter salmon speak mail luggage grit arrange common loop crowd come field auction
+    ```
 
 3. Generate HD master key from secret phrase.  ***Do not "make up" secret*** - generate it at random.
 
