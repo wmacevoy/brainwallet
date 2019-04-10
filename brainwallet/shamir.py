@@ -40,7 +40,7 @@ class Shamir:
         if self._keys[0] == None:
             raise ValueError("secret must be set")
         secret=self._keys[0]
-        
+
 
         cs = [0 for i in range(self._minimum)]
         cs[0]=secret
@@ -79,7 +79,7 @@ class Shamir:
             x, lastX = lastX - quot * x, x
             y, lastY = lastY - quot * y, y
         return lastX, lastY
-        
+
     def _divmod(self,num, den):
         '''compute num / den modulo prime'''
         num = num % self._prime
@@ -93,7 +93,7 @@ class Shamir:
             if v < 0: v = self._prime + v
             a = (a*v) % self._prime
         return a
-        
+
     def _lagrangeInterpolate(self,x, xs, ys):
         '''
         Find the y-value for the given x, given n (x, y) points;
@@ -104,7 +104,7 @@ class Shamir:
 
         nums = []
         dens = []
-        
+
         for i in range(k):
             others = list(xs)
             cur = others.pop(i)
@@ -127,7 +127,7 @@ class Shamir:
                 if len(xs) == self._minimum: break
 
             if len(xs) < self._minimum:
-                raise ValueError("only %d of minimum %s keys" % (len(xs),self._minumum))
+                raise ValueError("only %d of minimum %s keys" % (len(xs),self._minimum))
 
             self._keys[index]=self._lagrangeInterpolate(index,xs,ys)
         return self._keys[index]
