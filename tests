@@ -9,5 +9,6 @@ fi
 cd "$BRAINWALLET_DIR/brainwallettest"
 for test in *test.py
 do
+  echo "running $test..."
 	env "python$TRAVIS_PYTHON_VERSION" "$test"
 done 
