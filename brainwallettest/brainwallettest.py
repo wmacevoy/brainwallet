@@ -7,7 +7,11 @@ parentdir = os.path.dirname(currentdir)
 
 sys.path.insert(0,parentdir+"/brainwallet") 
 
-import cStringIO
+from check import Check
+if Check.PYTHON3:
+    import io
+else:
+    import cStringIO
 
 from brainwallet import BrainWallet
 
@@ -27,7 +31,10 @@ class BrainWalletTest(unittest.TestCase):
 
     def begin(self): # capture output
         self.outs.append(sys.stdout)
-        sys.stdout = cStringIO.StringIO()
+        if Check.PYTHON3:
+            sys.stdout = io.StringIO()
+        else:
+            sys.stdout = cStringIO.StringIO()
 
     def end(self): # return captured output
         strval = sys.stdout.getvalue()
