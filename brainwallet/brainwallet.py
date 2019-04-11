@@ -13,6 +13,7 @@ class BrainWallet:
     DEFAULT_SHARES  = 4
     DEFAULT_PRIME = 2**128-159
     DEFAULT_LANGUAGE = "english"
+    PBKDF2_ROUNDS = 2048
 
     def __init__(self):
         self._minimum = None
