@@ -70,7 +70,7 @@ class Check:
         if not isinstance(value,cls.UNICODE):
             value=value.decode("utf-8")
 
-        value = unicodedata.normalize("NFKD", value)
+        value = unicodedata.normalize("NFKC", value)
 
         return value
 
