@@ -6,7 +6,6 @@ import os
 import sys
 import unittest
 from check import Check
-from brainwallet import BrainWallet
 
 if Check.PYTHON3:
     import io
@@ -20,6 +19,7 @@ parentdir = os.path.dirname(currentdir)
 
 sys.path.insert(0, parentdir + "/brainwallet")
 
+from brainwallet import BrainWallet
 
 class BrainWalletTest(unittest.TestCase):
     debug = 0

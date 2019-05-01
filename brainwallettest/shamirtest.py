@@ -5,9 +5,6 @@ import math
 import os
 import sys
 import unittest
-from millerrabin import MillerRabin
-from shamir import Shamir
-from rng import RNG
 
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -15,6 +12,9 @@ parentdir = os.path.dirname(currentdir)
 
 sys.path.insert(0, parentdir + "/brainwallet")
 
+from millerrabin import MillerRabin
+from shamir import Shamir
+from rng import RNG
 
 class ShamirTest(unittest.TestCase):
     rng = RNG()
