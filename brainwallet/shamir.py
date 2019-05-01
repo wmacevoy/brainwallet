@@ -6,7 +6,7 @@ from check import Check
 
 class Shamir:
     def __init__(self, minimum, prime):
-        minimum = Check.toInt(minimum,"minimum",1)
+        minimum = Check.toInt(minimum, "minimum", 1)
         prime = Check.toPrime(prime)
 
         self._minimum = minimum
@@ -19,39 +19,38 @@ class Shamir:
     def getPrime(self):
         return self._prime
 
-    def setKey(self,index,key):
-        index=Check.toInt(index,"index",0)
-        name="key" if index > 0 else "secret"
-        key=Check.toInt(key,name,0,self._prime-1)
+    def setKey(self, index, key):
+        index = Check.toInt(index, "index", 0)
+        name = "key" if index > 0 else "secret"
+        key = Check.toInt(key, name, 0, self._prime - 1)
         self._keys[index] = key
 
-    def randomizeSecret(self,rng=RNG()):
+    def randomizeSecret(self, rng=RNG()):
         self.setSecret(rng.next(self._prime))
 
-    def setSecret(self,secret):
-        self.setKey(0,secret)
+    def setSecret(self, secret):
+        self.setKey(0, secret)
 
     def getSecret(self):
         return self.getKey(0)
 
-    def randomizeKeys(self,shares,rng=RNG()):
-        shares = Check.toInt(shares,"shares",self._minimum)
+    def randomizeKeys(self, shares, rng=RNG()):
+        shares = Check.toInt(shares, "shares", self._minimum)
 
-        if self._keys[0] == None:
+        if self._keys[0] is None:
             raise ValueError("secret must be set")
-        secret=self._keys[0]
-
+        secret = self._keys[0]
 
         cs = [0 for i in range(self._minimum)]
-        cs[0]=secret
-        for i in range(1,self._minimum):
-            cs[i]=rng.next(self._prime)
+        cs[0] = secret
+        for i in range(1, self._minimum):
+            cs[i] = rng.next(self._prime)
         self._keys = dict()
-        self._keys[0]=secret
-        for i in range(1,shares+1):
-            self._keys[i]=self._evalPoly(cs,i)
+        self._keys[0] = secret
+        for i in range(1, shares + 1):
+            self._keys[i] = self._evalPoly(cs, i)
 
-    def _evalPoly(self,cs, x):
+    def _evalPoly(self, cs, x):
         '''evaluates polynomial (coefficient tuple) at x'''
         a = 0
         for c in reversed(cs):
@@ -61,7 +60,7 @@ class Shamir:
         return a
 
     @classmethod
-    def _extendedGCD(cls,a,b):
+    def _extendedGCD(cls, a, b):
         '''
         division in integers modulus p means finding the inverse of the
         denominator modulo p and then multiplying the numerator by this
@@ -75,26 +74,27 @@ class Shamir:
         lastY = 0
         while b != 0:
             quot = a // b
-            a, b = b, a%b
+            a, b = b, a % b
             x, lastX = lastX - quot * x, x
             y, lastY = lastY - quot * y, y
         return lastX, lastY
 
-    def _divmod(self,num, den):
+    def _divmod(self, num, den):
         '''compute num / den modulo prime'''
         num = num % self._prime
         den = den % self._prime
         inv, _ = self._extendedGCD(den, self._prime)
         return (num * inv) % self._prime
 
-    def _PI(self,vals):
+    def _PI(self, vals):
         a = 1
         for v in vals:
-            if v < 0: v = self._prime + v
-            a = (a*v) % self._prime
+            if v < 0:
+                v = self._prime + v
+            a = (a * v) % self._prime
         return a
 
-    def _lagrangeInterpolate(self,x, xs, ys):
+    def _lagrangeInterpolate(self, x, xs, ys):
         '''
         Find the y-value for the given x, given n (x, y) points;
         k points will define a polynomial of up to kth order
@@ -113,21 +113,23 @@ class Shamir:
 
         den = self._PI(dens)
         num = sum([self._divmod(nums[i] * den * ys[i], dens[i])
-               for i in range(k)])
+                   for i in range(k)])
         return self._divmod(num, den)
 
-    def getKey(self,index):
-        index = Check.toInt(index,"index",0)
-        if not index in self._keys:
-            xs=[]
-            ys=[]
+    def getKey(self, index):
+        index = Check.toInt(index, "index", 0)
+        if index not in self._keys:
+            xs = []
+            ys = []
             for x in self._keys:
                 xs.append(x)
                 ys.append(self._keys[x])
-                if len(xs) == self._minimum: break
+                if len(xs) == self._minimum:
+                    break
 
             if len(xs) < self._minimum:
-                raise ValueError("only %d of minimum %s keys" % (len(xs),self._minimum))
+                raise ValueError("only %d of minimum %s keys" %
+                                 (len(xs), self._minimum))
 
-            self._keys[index]=self._lagrangeInterpolate(index,xs,ys)
+            self._keys[index] = self._lagrangeInterpolate(index, xs, ys)
         return self._keys[index]
