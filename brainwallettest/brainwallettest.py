@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import inspect
-import math
 import os
 import sys
 import unittest
@@ -20,6 +19,7 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir + "/brainwallet")
 
 from brainwallet import BrainWallet
+
 
 class BrainWalletTest(unittest.TestCase):
     debug = 0

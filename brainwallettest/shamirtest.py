@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import inspect
-import math
 import os
 import sys
 import unittest
@@ -15,6 +14,7 @@ sys.path.insert(0, parentdir + "/brainwallet")
 from millerrabin import MillerRabin
 from shamir import Shamir
 from rng import RNG
+
 
 class ShamirTest(unittest.TestCase):
     rng = RNG()
@@ -61,4 +61,3 @@ class ShamirTest(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-

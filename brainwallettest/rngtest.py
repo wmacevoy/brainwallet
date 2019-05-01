@@ -12,6 +12,7 @@ sys.path.insert(0, parentdir + "/brainwallet")
 
 import rng
 
+
 class RNGTest(unittest.TestCase):
     def getUnit(self):
         return rng.RNG()

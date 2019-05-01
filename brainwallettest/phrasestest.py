@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import inspect
-import math
 import os
 import sys
 import unittest
@@ -14,6 +13,7 @@ sys.path.insert(0, parentdir + "/brainwallet")
 
 from rng import RNG
 from phrases import Phrases
+
 
 class PhrasesTest(unittest.TestCase):
     rng = RNG()

@@ -1,5 +1,4 @@
 import inspect
-import math
 import os
 import sys
 import unittest
@@ -8,10 +7,11 @@ currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 
-sys.path.insert(0, parentdir + "/brainwallet") 
+sys.path.insert(0, parentdir + "/brainwallet")
 
 from millerrabin import MillerRabin
 from rng import RNG
+
 
 class MillerRabinTest(unittest.TestCase):
     # primes slightly larger than a power of 2
