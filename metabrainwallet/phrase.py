@@ -23,7 +23,7 @@ class Phrase(Memoable):
             'default' : None
         },
         'frequency' : {
-            'dbType' : 'int',
+            'dbType' : 'integer',
             'db' : lambda value : int(value) if value != None else None,
             'py' : lambda value : int(value) if value != None else None,
             'default' : None
