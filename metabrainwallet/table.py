@@ -44,6 +44,16 @@ class Table:
             cursor.execute(sql)
             return cursor
 
+    def createIndex(self,columns,unique=False):
+        index=f"index_{self.name}_on_{'__'.join(columns)}"
+        sql=f"create {'unique' if unique else ''} index if not exists {index} on {self.name}({','.join(columns)})"
+        self.execute(sql)
+
+    def dropIndex(self,columns):
+        index=f"index_{self.name}_on_{'__'.join(columns)}"
+        sql=f"drop index if exists {index}"
+        self.execute(sql)
+        
     def dropTable(self):
         self.execute(f"drop table {self.name}")
         
@@ -122,7 +132,7 @@ class Table:
             return None
         else:
             row = rows[0]
-            memo = fullRow2Memo(rows[0])
+            memo = self.fullRow2Memo(rows[0])
             return memo
 
     def loadMemosByColumns(self, wheres):

@@ -11,7 +11,7 @@ class Shamir:
 
         self._minimum = minimum
         self._prime = prime
-        self._keys = dict()
+        self._points = dict()
 
     def getMinimum(self):
         return self._minimum

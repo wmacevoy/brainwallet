@@ -20,10 +20,10 @@ class BadTable(Table):
 
     def createTable(self):
         super().createTable()
-        self.execute(f"create unique index if not exists index_{self.name}_word ON {self.name}(word)")
+        self.createIndex(columns=['word'],unique=True)
 
     def dropTable(self):
-        self.execute(f"drop index if exists index_{self.name}_word")
+        self.dropIndex(columns=['word'])
         super().dropTable()
         
     def addAll(self,words):

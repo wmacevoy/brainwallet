@@ -1,6 +1,7 @@
 import os,sqlite3
 from badtable import BadTable
 from phrasetable import PhraseTable
+from translationtable import TranslationTable
 
 class Db:
     DEFAULT_DB_FILE = str(os.path.expanduser("metabrainwallet.db"))
@@ -9,6 +10,7 @@ class Db:
         self._connection = None
         self._bad = BadTable(self)
         self._phrase = PhraseTable(self)
+        self._translation = TranslationTable(self)
         self._dbFile = dbFile
 
     @property
@@ -18,6 +20,10 @@ class Db:
     @property
     def phrase(self):
         return self._phrase
+
+    @property
+    def translation(self):
+        return self._translation
     
     @property
     def dbFile(self):
@@ -47,10 +53,12 @@ class Db:
     def createTables(self):
         self.bad.createTable()
         self.phrase.createTable()
+        self.translation.createTable()
 
     def dropTables(self):
         self.bad.dropTable()
         self.phrase.dropTable()
+        self.translation.dropTable()
 
     def close(self):
         if not self._connection == None:

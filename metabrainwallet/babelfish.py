@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+
 import os,sys
 from google.cloud import translate_v2
 from languages import LANGUAGES_100M, LANGUAGES_GOOGLE
