@@ -18,7 +18,7 @@ class Hash:
             return None
         i=0
         n=len(data)
-        state = cls.advance(n)
+        state = 0
         while i+6<=n:
             x=(data[i+0]<<0) | (data[i+1]<<8) | (data[i+2]<<16) | (data[i+3]<<24) | (data[i+4]<<32) | (data[i+5]<<40)
             state = cls.advance(state ^ x)
