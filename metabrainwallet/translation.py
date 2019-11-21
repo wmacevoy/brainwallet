@@ -25,17 +25,3 @@ class Translation(Memoable):
 
     def __init__(self,memo={}):
         super().__init__(Translation.TYPES,memo)
-
-    def orignal(self,db):
-        if self.originalId == None:
-            return None
-        phrase=Phrase()
-        db.phrase.loadById(phrase,self.originalId)
-        return phrase
-
-    def translated(self,db):
-        if self.translatedId == None:
-            return None
-        phrase=Phrase()
-        db.phrase.loadById(phrase,self.translatedId)
-        return phrase
