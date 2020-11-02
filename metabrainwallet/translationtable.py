@@ -15,11 +15,7 @@ class TranslationTable(Table):
     def dropTable(self):
         self.dropIndex(columns=['originalId','translatedId'])
         super().dropTable()
-    @property
-    def babelfish(self):
-        if self._babelfish == None:
-            babelfish = Bablefish()
-        return babelfish
+        
     def find(self,original,language):
         self.db.phrase.save(original)
         sql="select translated.id from translation join phrase original on translation.originalId = original.id join phrase translated on translation.translatedId = translated.id where original.language = ? and original.content = ? and translated.language = ?"
@@ -34,20 +30,20 @@ class TranslationTable(Table):
             ans.append(translated)
         return ans
 
-    def addTranslation(self,original,translated):
+    def addTranslation(self,original,translated, commit = True):
         self.db.phrase.save(original)
         self.db.phrase.save(translated)
         translation = Translation({'originalId': original.id, 'translatedId':translated.id})
-        self.save(translation)
+        self.save(translation, commit)
         return translation
 
-    def save(self,translation):
+    def save(self,translation, commit = True):
         sql="select id from translation where originalId = ? and translatedId = ?"
         parameters=(translation.originalId,translation.translatedId)
         cursor = self.execute(sql,parameters)
         rows = cursor.fetchall()
         if len(rows) == 0:
-            translation.id = self.insert(translation.memo)
+            translation.id = self.insert(translation.memo, commit)
         else:
             translation.id = rows[0][0]
         

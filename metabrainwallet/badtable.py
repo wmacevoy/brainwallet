@@ -5,8 +5,7 @@ class BadTable(Table):
     def __init__(self,db):
         super().__init__(db,Bad.TABLE,Bad.TYPES)
 
-    def save(self,bad):
-        types = self.types
+    def save(self,bad, commit = True):
         id = bad.id
         word = bad.word
         if id == None and word != None:
@@ -16,7 +15,7 @@ class BadTable(Table):
             rows = cursor.fetchall()
             if len(rows) > 0:
                 bad.id = rows[0][0]
-        super().save(bad)
+        super().save(bad, commit)
 
     def createTable(self):
         super().createTable()
@@ -38,7 +37,6 @@ class BadTable(Table):
         words=Bad.getBadWords()
         self.addAll(words)
 
-        
     def contains(self,word):
         word = Bad.computeHash(word)
         memos = self.loadMemosByColumns({'word':word})

@@ -10,10 +10,10 @@ class Babelfish:
         for language in LANGUAGES_100M:
             self.addLanguage(language)
 
-    def __init__(self,source='en'):
+    def __init__(self,source='English'):
         if os.environ.get('GOOGLE_APPLICATION_CREDENTIALS')==None:
             load_dotenv(find_dotenv())
-        self._source = source
+        self._source = LANGUAGES_GOOGLE[source]
         self._languages = set()
         self._client = None
         self.addCommonLanguages()
@@ -30,6 +30,9 @@ class Babelfish:
     def source(self):
         return self._source
 
+    def close(self):
+        pass
+    
     @property
     def client(self):
         if self._client == None:
@@ -52,6 +55,7 @@ def babelfish(*words):
     babelfish = Babelfish()
     for word in words:
         print(repr(babelfish.translate(word)))
+    babelfish.close()
 
 def testBabelfish():
     babelfish("pidgin")

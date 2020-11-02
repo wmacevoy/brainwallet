@@ -5,7 +5,7 @@ from phrase import Phrase
 from db import Db
 
 class CachedBabelfish(Babelfish):
-    def __init__(self,source='en'):
+    def __init__(self,source='English'):
         super().__init__(source)
         self._db = Db()
 

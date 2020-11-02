@@ -5,8 +5,7 @@ class PhraseTable(Table):
     def __init__(self,db):
         super().__init__(db,Phrase.TABLE,Phrase.TYPES)
 
-    def save(self,phrase):
-        types = self.types
+    def save(self,phrase, commit = True):
         id = phrase.id
         language = phrase.language
         content = phrase.content
@@ -17,7 +16,7 @@ class PhraseTable(Table):
             rows = cursor.fetchall()
             if len(rows) > 0:
                 phrase.id = rows[0][0]
-        super().save(phrase)
+        super().save(phrase,commit)
 
     def createTable(self):
         super().createTable()
