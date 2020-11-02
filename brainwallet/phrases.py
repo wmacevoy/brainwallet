@@ -117,7 +117,7 @@ class Phrases:
     def _length(self,number):
         length=int(math.floor(math.log((number+1)*(self.radix-1)+1,self.radix)))
         while self._offset(length+1) <= number: length += 1
-        while self._offset(length)  > number: length += 1
+        while self._offset(length)  > number: length -= 1
         return length
                           
     def toNumber(self,phrase):
