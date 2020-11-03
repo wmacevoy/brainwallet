@@ -7,28 +7,24 @@ parentdir = os.path.dirname(currentdir)
 
 sys.path.insert(0,parentdir+"/brainwallet") 
 
-from combinations import Combinations
+import combinations
 
 class CombinationsTest(unittest.TestCase):
 
     def _testChoose(self,n,r,c):
-        nCr=Combinations.choose(n,r)
+        nCr=combinations.choose(n,r)
         self.assertEqual(nCr,len(c))
 
     def _testUnrank(self,n,r,c):
-        nCr=Combinations.choose(n,r)
+        nCr=combinations.choose(n,r)
         for k in range(nCr):
-            d = Combinations.unrank(n,r,k)
-        for k in range(nCr):
-            d = Combinations.unrank(n,r,k)
+            d = combinations.unrank(n,r,k)
             self.assertEqual(d,c[k])
 
     def _testRank(self,n,r,c):
-        nCr=Combinations.choose(n,r)        
+        nCr=combinations.choose(n,r)        
         for k in range(nCr):
-            j = Combinations.rank(n,r,c[k])
-        for k in range(nCr):
-            j = Combinations.rank(n,r,c[k])
+            j = combinations.rank(n,r,c[k])
             self.assertEqual(k,j)
 
     def get5C2(self):
@@ -77,16 +73,16 @@ class CombinationsTest(unittest.TestCase):
         n=2048
         r=1024
         t0=time.time()
-        k=Combinations.choose(n,r)//2
+        k=combinations.choose(n,r)//2
         t1=time.time()
         tChoose=t1-t0
-        c=Combinations.unrank(n,r,k)
+        c=combinations.unrank(n,r,k)
         t2=time.time()
         tUnrank=t2-t1
-        j=Combinations.rank(n,r,c)
+        j=combinations.rank(n,r,c)
         t3=time.time()
         tRank=t3-t2
-        print('choose time=%.3f, unrank time=%.3f, rank time=%.3f' % (tChoose,tUnrank,tRank))
+#        print('choose time=%.3f, unrank time=%.3f, rank time=%.3f' % (tChoose,tUnrank,tRank))
         self.assertLess(tChoose,0.01)
         self.assertLess(tUnrank,0.1)
         self.assertLess(tRank,0.01)
