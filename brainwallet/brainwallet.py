@@ -13,7 +13,9 @@ from millerrabin import MillerRabin
 class BrainWallet:
     DEFAULT_MINIMUM = 2
     DEFAULT_SHARES  = 4
-    DEFAULT_PRIME = 2**128-159
+    DEFAULT_ORDERED = True
+    DEFAULT_PRIME_ORDERED = 2**128-159
+    DEFAULT_PRIME_UNORDERED=combinations(2048,14)-67
     DEFAULT_LANGUAGE = "english"
 
     def __init__(self):
@@ -21,6 +23,7 @@ class BrainWallet:
         self._shares = None
         self._prime = None
         self._language = None
+        self._ordered = None
         self._keys = dict()
         self._millerRabin = MillerRabin()
 
@@ -39,9 +42,18 @@ class BrainWallet:
 
     def setShares(self,value):
         self._shares = Check.toInt(value,"shares",1)
+
+    def getOrdered(self):
+        return self._ordered if self._ordered != None else self.DEFAULT_ORDERED
+
+    def setOrdered(self,value):
+        self._ordered = Check.toBoolean(value)
         
+    def getDefaultPrime(self):
+        return self.DEFAULT_ORDERED_PRIME if self.getOrdered() else self.DEFAULT_UNORDERD_PRIME
+
     def getPrime(self):
-        return self._prime if self._prime != None else self.DEFAULT_PRIME
+        return self._prime if self._prime != None else self.getDefaultPrime()
 
     def setBits(self,bits):
         bits=Check.toInt(bits,"bits",96,256)

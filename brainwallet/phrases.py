@@ -111,16 +111,16 @@ class Phrases:
             if not word in self.invWords: return False
         return True
 
-    def _offset(self,length): # number of phrases shorter than length
+    def _offsetOrdered(self,length): # number of phrases shorter than length
         return ((pow(self.radix,length)-1)//(self.radix-1))-1
 
-    def _length(self,number):
+    def _lengthOrdered(self,number):
         length=int(math.floor(math.log((number+1)*(self.radix-1)+1,self.radix)))
-        while self._offset(length+1) <= number: length += 1
-        while self._offset(length)  > number: length -= 1
+        while self._offsetOrdered(length+1) <= number: length += 1
+        while self._offsetOrdered(length)  > number: length -= 1
         return length
                           
-    def toNumber(self,phrase):
+    def toNumberUnordered(self,phrase):
         phrase=self.toList(phrase)
         if not self.isPhrase(phrase):
             raise ValueError("unknown phrase")
@@ -132,7 +132,18 @@ class Phrases:
         number += self._offset(length)
         return number
 
-    def toPhrase(self,number):
+    def toNumberOrdered(self,phrase):
+        phrase=self.toList(phrase)
+        if not self.isPhrase(phrase):
+            raise ValueError("unknown phrase")
+        length=len(phrase)
+        digits = [0]*length
+        for i in range(length):
+            digits[i] = self.invWords[phrase[i]]
+        number = combinations.rank(self.radix,length,digits)
+        return number
+
+    def toPhraseUnordered(self,number):
         length=self._length(number)
         number -= self._offset(length)
         words = [u""]*length
@@ -141,7 +152,16 @@ class Phrases:
             number = number // self.radix
         phrase=self.space().join(words)
         return phrase
-        
+
+    def toPhraseOrdered(self,number):
+        length=self._length(number)
+        words = [u""]*length
+        for i in range(length):
+            words[length-1-i]=self.words[number % self.radix]
+            number = number // self.radix
+        phrase=self.space().join(words)
+        return phrase
+    
 def main():
     if len(sys.argv) > 1 and sys.argv[1] == 'test':
         test()
