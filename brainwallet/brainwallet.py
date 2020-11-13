@@ -49,10 +49,10 @@ class BrainWallet:
         return self._prime if self._prime is not None else self.DEFAULT_PRIME
 
     def setBits(self, bits):
-        bits=Check.toInt(bits,"bits",96,256)
+        bits = Check.toInt(bits, "bits", 96, 256)
         self.setPrime(self._millerRabin.prevPrime(2**bits))
 
-    def setPrime(self,prime):
+    def setPrime(self, prime):
         self._prime = Check.toPrime(prime)
 
     def getLanguage(self):
@@ -131,12 +131,8 @@ class BrainWallet:
             self._keys[index] = shamir.getKey(index)
 
     def getSeed(self, salt=""):
-        if Check.PYTHON3:
-            password = self.getSecret()
-            salt = (u"mnemonic" + salt)
-        else:
-            password = self.getSecret().encode("utf-8")
-            salt = (u"mnemonic" + salt).encode("utf-8")
+        password = self.getSecret().encode("utf-8")
+        salt = (u"mnemonic" + salt).encode("utf-8")
         iterations = self.PBKDF2_ROUNDS
         stretched = hashlib.pbkdf2_hmac('sha512', password, salt, iterations)
         return stretched[0:64]

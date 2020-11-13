@@ -4,18 +4,7 @@ from millerrabin import MillerRabin
 
 
 class Check:
-    @classmethod
-    def isBoolean(cls,value):
-        return type(value) is bool
 
-    @classmethod
-
-    def toBoolean(cls,value):
-        if value:
-            return True
-        else:
-            return False
-    
     @classmethod
     def isInt(cls, value, min=None, max=None):
         if cls.isString(value) and value.isdigit():

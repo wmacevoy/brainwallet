@@ -81,5 +81,6 @@ def main():
         q = mr.isProbablyPrime(x)
         print("prime(" + str(x) + ")=" + str(q))
 
+
 if __name__ == "__main__":
     main()

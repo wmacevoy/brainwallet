@@ -4,12 +4,6 @@ import inspect
 import os
 import sys
 import unittest
-from check import Check
-
-if Check.PYTHON3:
-    import io
-else:
-    import cStringIO
 
 currentdir = os.path.dirname(
     os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -19,6 +13,13 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir + "/brainwallet")
 
 from brainwallet import BrainWallet
+from check import Check
+from phrases import Phrases
+
+if Check.PYTHON3:
+    import io
+else:
+    import cStringIO
 
 
 class BrainWalletTest(unittest.TestCase):
@@ -61,7 +62,7 @@ class BrainWalletTest(unittest.TestCase):
         brainWallet.cli(args)
         master1 = self.end()
         self.begin()
-        print self.master
+        print (self.master)
         master2 = self.end()
         assert master1 == master2
 
@@ -77,6 +78,38 @@ class BrainWalletTest(unittest.TestCase):
         seed = brainWallet.getSeed()
         result = brainWallet.getHDMasterKey(seed)
         assert self.master == result
+
+    def _testRecoverFrom3of5KeysIn(self,bits,language):
+        brainWallet = BrainWallet()
+        minimum=3
+        shares=5
+        brainWallet.cli(["--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--randomize"])
+        keys=[""]*6
+        self.begin()
+        brainWallet.cli(["--secret"])
+        secret1 = self.end().rstrip()
+        keys[0]=secret1
+
+        for i in range(1,6):
+            self.begin()
+            brainWallet.cli(["--key" + str(i)])
+            keys[i] = self.end().rstrip()
+            
+        for i1 in range(1,6):
+            for i2 in range(1,6):
+                for i3 in range(1,6):
+                    if i1 == i2 or i1 == i3 or i2 == i3: continue
+                    brainWallet2 = BrainWallet()
+                    self.begin()                    
+                    brainWallet2.cli(["--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--key"+str(i1)+"="+keys[i1],"--key"+str(i2)+"="+keys[i2],"--key"+str(i3)+"="+keys[i3],"--secret"])
+                    secret2 = self.end().rstrip()
+                    self.assertEqual(secret1,secret2)
+
+    def testRecoverFrom3of5Keys(self):
+        bits=160
+        for language in Phrases.getLanguages():
+            self._testRecoverFrom3of5KeysIn(bits,language)
+        
 
     def testMasterFromSecretObj(self):
         for k in range(self.cases):
