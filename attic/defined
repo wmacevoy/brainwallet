@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+
+import sys
+
+PYTHON3 = (sys.version_info.major >= 3)
+
+
+def GetCommonWords(filename):
+    if PYTHON3:
+        file = open(filename, "r", encoding="utf-8")
+    else:
+        file = open(filename, "r")
+
+    words = []
+    for word in file.readlines():
+        word = word.spli('\t')Check.toString(word)
+        comment = word.rfind("#")
+        if comment >= 0:
+            word = word[0:comment]
+        words.extend(cls.toList(word))
+
+
+class CommonWords:
+    def __init__(self):

@@ -1,0 +1,14 @@
+#!/bin/bash
+if [ "$(uname)" = "Linux" ]
+then
+  BRAINWALLET_DIR="$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")"
+else
+  BRAINWALLET_DIR="$(dirname "${BASH_SOURCE[0]}")"
+fi
+
+cd "$BRAINWALLET_DIR/brainwallettest"
+for test in *test.py
+do
+  echo "running $test..."
+	env "python$TRAVIS_PYTHON_VERSION" "$test"
+done 
