@@ -275,7 +275,7 @@ class BrainWallet:
                 self.dump()
             cmd = "--seed"
             if arg == cmd:
-                print (binascii.hexlify(self.getCheckedSeed()))
+                print (binascii.hexlify(self.getSeed()))
             cmd = "--master"
             if arg == cmd:
                 seed = self.getSeed()
