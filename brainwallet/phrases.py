@@ -51,6 +51,8 @@ class Phrases:
                 word=word[0:comment]
             words.extend(cls.toList(word))
 
+        file.close()
+
         invWords = dict()
         for i in range(len(words)):
             if words[i] in invWords:

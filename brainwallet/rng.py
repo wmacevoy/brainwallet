@@ -28,17 +28,20 @@ class RNG:
         mask = 2**bits - 1
         while True:
             data = self.source(bytes)
-            k = 0
-            for i in range(bytes):
-                bi = ord(data[i])
-                k = k | (bi << (8*i))
+            if sys.version_info.major >= 3:
+                k = int.from_bytes(data,sys.byteorder, signed=False)
+            else:
+                k = 0
+                for i in range(bytes):
+                    bi = ord(data[i])
+                    k = k | (bi << (8*i))
             k = k & mask
             if k < n: return k
 
 def main():
     rng = RNG()
     for i in range(1,len(sys.argv)):
-        print rng.next(int(sys.argv[i]))
+        print (rng.next(int(sys.argv[i])))
 
 if __name__ == "__main__":
     main()
