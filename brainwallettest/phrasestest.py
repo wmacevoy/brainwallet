@@ -69,11 +69,17 @@ class PhrasesTest(unittest.TestCase):
             phrase = self.mkPhrase(language, length)
             self._testPhrase(language, phrase)
 
+    def testDecimal(self):
+        (decimal,invDecimal) = Phrases.getWords("decimal")
+        self.assertEqual(2048,len(decimal))
+        for k in range(len(decimal)):
+            self.assertEqual(str(k),decimal[k])
+
     def testPhrase(self):
         languages = Phrases.getLanguages()
         for language in ["chinese_simplified", "chinese_traditional",
                          "english", "french", "italian", "japanese",
-                         "korean", "spanish"]:
+                         "korean", "spanish","decimal"]:
             assert language in languages
         for language in languages:
             self._testPhrases(language)
