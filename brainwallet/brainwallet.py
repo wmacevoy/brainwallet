@@ -14,7 +14,8 @@ from millerrabin import MillerRabin
 class BrainWallet:
     DEFAULT_MINIMUM = 2
     DEFAULT_SHARES = 4
-    DEFAULT_PRIME = 2**128 - 159
+#    DEFAULT_PRIME = 2**128 - 159
+    DEFAULT_PRIME = 2**132 - 347
     DEFAULT_LANGUAGE = "english"
     PBKDF2_ROUNDS = 2048
 
@@ -51,6 +52,18 @@ class BrainWallet:
     def setBits(self, bits):
         bits = Check.toInt(bits, "bits", 96, 256)
         self.setPrime(self._millerRabin.prevPrime(2**bits))
+
+    def getBits(self):
+        prime = self.getPrime()
+        bits = int(math.ceil(math.log(prime, 2)))
+        # correct for floating point errors
+        while 2**(bits-1) >= prime:
+            bits = bits - 1
+        while 2**bits < prime:
+            bits = bits + 1
+        if (self._millerRabin.prevPrime(2**bits) != prime):
+            bits = None
+        return bits
 
     def setPrime(self, prime):
         self._prime = Check.toPrime(prime)
@@ -183,9 +196,7 @@ class BrainWallet:
 
     def dump(self):
         prime = self.getPrime()
-        bits = int(math.ceil(math.log(prime, 2)))
-        if (self._millerRabin.prevPrime(2**bits) != prime):
-            bits = None
+        bits = self.getBits()
         shares = self.getShares()
         minimum = self.getMinimum()
         language = self.getLanguage()
@@ -193,7 +204,8 @@ class BrainWallet:
         print ("--language=%s" % language)
         if bits is not None:
             print ("--bits=%d" % bits)
-        print ("--prime=%d" % prime)
+        else:
+            print ("--prime=%d" % prime)
         print ("--minimum=%d" % minimum)
         print ("--shares=%d" % shares)
         if Check.PYTHON3:
