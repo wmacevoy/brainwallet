@@ -26,6 +26,7 @@ class PhrasesTest(unittest.TestCase):
 
     def testAmbiguity(self):
         languages = Phrases.getLanguages()
+        languages.remove("ab")
         allWords = dict()
         for language in languages:
             phrases = Phrases.forLanguage(language)
@@ -45,7 +46,7 @@ class PhrasesTest(unittest.TestCase):
             ambiguous = True
             for index in indexs:
                 for lang in indexs[index]:
-                    print ("word %s in %s index %d" % (word, index, lang))
+                    print ("word %s in %s index %d" % (word, lang, index))
 
         assert not ambiguous
 
@@ -79,7 +80,7 @@ class PhrasesTest(unittest.TestCase):
         languages = Phrases.getLanguages()
         for language in ["chinese_simplified", "chinese_traditional",
                          "english", "french", "italian", "japanese",
-                         "korean", "spanish","decimal"]:
+                         "korean", "spanish","decimal","base58"]:
             assert language in languages
         for language in languages:
             self._testPhrases(language)
