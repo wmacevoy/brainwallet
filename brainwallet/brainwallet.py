@@ -100,7 +100,7 @@ class BrainWallet:
     def number(self, phrase):
         phrase = Check.toString(phrase)
         phrases = self._getPhrases()
-        ordered = self.getOrdeerd()
+        ordered = self.getOrdered()
         if not phrases.isPhrase(phrase):
             detects = Phrases.detectLanguages(phrase)
             phrases = Phrases.forLanguage(detects[0]) if len(detects) == 1 else None
@@ -110,7 +110,7 @@ class BrainWallet:
 
     def phrase(self, number):
         number = Check.toInt(number)
-        ordered = self.getOrdeerd()
+        ordered = self.getOrdered()
         return self._getPhrases().toPhrase(number, ordered)
 
     def getSecret(self):

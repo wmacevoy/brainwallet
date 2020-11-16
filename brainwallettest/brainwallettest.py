@@ -79,11 +79,11 @@ class BrainWalletTest(unittest.TestCase):
         result = brainWallet.getHDMasterKey(seed)
         assert self.master == result
 
-    def _testRecoverFrom3of5KeysIn(self,bits,language):
+    def _testRecoverFrom3of5KeysIn(self,bits,language,ordered):
         brainWallet = BrainWallet()
         minimum=3
         shares=5
-        brainWallet.cli(["--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--randomize"])
+        brainWallet.cli(["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--randomize"])
         keys=[""]*6
         self.begin()
         brainWallet.cli(["--secret"])
@@ -101,14 +101,15 @@ class BrainWalletTest(unittest.TestCase):
                     if i1 == i2 or i1 == i3 or i2 == i3: continue
                     brainWallet2 = BrainWallet()
                     self.begin()                    
-                    brainWallet2.cli(["--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--key"+str(i1)+"="+keys[i1],"--key"+str(i2)+"="+keys[i2],"--key"+str(i3)+"="+keys[i3],"--secret"])
+                    brainWallet2.cli(["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--key"+str(i1)+"="+keys[i1],"--key"+str(i2)+"="+keys[i2],"--key"+str(i3)+"="+keys[i3],"--secret"])
                     secret2 = self.end().rstrip()
                     self.assertEqual(secret1,secret2)
 
     def testRecoverFrom3of5Keys(self):
         bits=160
         for language in Phrases.getLanguages():
-            self._testRecoverFrom3of5KeysIn(bits,language)
+            for ordered in [True, False]:
+                self._testRecoverFrom3of5KeysIn(bits,language,ordered)
         
 
     def testMasterFromSecretObj(self):
