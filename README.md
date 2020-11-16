@@ -12,7 +12,7 @@ Python tools for making brainwallet keys using the Shamir Secret Sharing algorit
 
 # Docker
 
-For those wishing to use Docker to run the Brainwallet software, follow these steps:
+For those wishing to use Docker, ensure that Docker is running, and then follow these steps:
 
 ## Build:
 Navigate to the brainwallet directory containing Dockerfile and in the command-line interface:

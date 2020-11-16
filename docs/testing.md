@@ -1,7 +1,6 @@
 # Brainwallet Testing
 
-The Brainwallet software comes with built-in tests, should you feel the need to \
-test recovery phrases, secret phrases, or the security thereof.
+The Brainwallet software comes with built-in tests, should you feel the need to test recovery phrases, secret phrases, or the security thereof.
 
 ---
 

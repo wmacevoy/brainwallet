@@ -10,11 +10,9 @@ def choose(n,r):
     """
     number of combinations of n things taken r at a time (order unimportant)
     """
-    if (n < r):
-        return 0
-    if (n == r):
-        return 1
-    s = min(r, (n - r))
+    s = min(r, n - r)
+    if s <= 0:
+        return 1 if s == 0 else 0
     t = n
     a = n-1
     b = 2

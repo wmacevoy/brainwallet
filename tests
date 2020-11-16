@@ -6,6 +6,9 @@ else
   BRAINWALLET_DIR="$(dirname "${BASH_SOURCE[0]}")"
 fi
 
-for test in $(ls "$BRAINWALLET_DIR/brainwallettest" | grep -E "*test.py$"); do
-	env "python$TRAVIS_PYTHON_VERSION" "$BRAINWALLET_DIR/brainwallettest/$test";
+cd "$BRAINWALLET_DIR/brainwallettest"
+for test in *test.py
+do
+  echo "running $test..."
+	env "python$TRAVIS_PYTHON_VERSION" "$test"
 done 

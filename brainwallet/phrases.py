@@ -3,6 +3,7 @@ import sys
 import re
 import math
 from check import Check
+import combinations
 
 class Phrases:
     _PHRASES=dict()
@@ -50,6 +51,8 @@ class Phrases:
             if comment >= 0:
                 word=word[0:comment]
             words.extend(cls.toList(word))
+
+        file.close()
 
         invWords = dict()
         for i in range(len(words)):
@@ -111,16 +114,68 @@ class Phrases:
             if not word in self.invWords: return False
         return True
 
-    def _offsetOrdered(self,length): # number of phrases shorter than length
-        return ((pow(self.radix,length)-1)//(self.radix-1))-1
+    def _count(self,length,ordered):
+        if ordered:
+            count = self.radix**length
+        else:
+            count = combinations.choose(self.radix,length)
+        return count
 
-    def _lengthOrdered(self,number):
-        length=int(math.floor(math.log((number+1)*(self.radix-1)+1,self.radix)))
-        while self._offsetOrdered(length+1) <= number: length += 1
-        while self._offsetOrdered(length)  > number: length -= 1
-        return length
-                          
-    def toNumberUnordered(self,phrase):
+    def _offset(self,length,ordered):
+        offset = 0
+        for k in range(1,length):
+            offset += self._count(k,ordered)
+        return offset
+
+    @classmethod
+    def rank(cls,n,r,c,ordered):
+        if ordered:
+            a = 0
+            for i in range(r):
+                a = a*n + c[i]
+            return a
+        else:
+            return combinations.rank(n,r,c)
+
+    @classmethod
+    def unrank(cls,n,r,k,ordered):
+        if ordered:
+            a = k
+            c = [0]*r
+            for i in range(r):
+                (a,c[r-i-1]) = divmod(a,n)
+            return c
+        else:
+            return combinations.unrank(n,r,k)
+
+    def _lengthAndOffset(self,number,ordered):
+        length = 1
+        offset = 0
+        while True:
+            count = self._count(length,ordered)
+            if number < offset+count: break
+            offset += count
+            length += 1
+        return (length,offset)
+
+    def toNumber(self,phrase,ordered=True):
+        phrase=self.toList(phrase)
+        if not self.isPhrase(phrase):
+            raise ValueError("unknown phrase")
+        length = len(phrase)
+        c = [self.invWords[phrase[i]] for i in range(length)]
+        return self._offset(length,ordered)+self.rank(self.radix,length,c,ordered)
+
+    def toPhrase(self,number,ordered=True):
+        (length,offset)=self._lengthAndOffset(number,ordered)
+        c = self.unrank(self.radix,length,number - offset,ordered)
+        words = [self.words[c[i]] for i in range(length)]
+        if not ordered:
+            words.sort()
+        phrase=self.space().join(words)
+        return phrase
+
+    def toNumber0(self,phrase):
         phrase=self.toList(phrase)
         if not self.isPhrase(phrase):
             raise ValueError("unknown phrase")
@@ -132,29 +187,9 @@ class Phrases:
         number += self._offset(length)
         return number
 
-    def toNumberOrdered(self,phrase):
-        phrase=self.toList(phrase)
-        if not self.isPhrase(phrase):
-            raise ValueError("unknown phrase")
-        length=len(phrase)
-        digits = [0]*length
-        for i in range(length):
-            digits[i] = self.invWords[phrase[i]]
-        number = combinations.rank(self.radix,length,digits)
-        return number
-
-    def toPhraseUnordered(self,number):
+    def toPhrase0(self,number):
         length=self._length(number)
         number -= self._offset(length)
-        words = [u""]*length
-        for i in range(length):
-            words[length-1-i]=self.words[number % self.radix]
-            number = number // self.radix
-        phrase=self.space().join(words)
-        return phrase
-
-    def toPhraseOrdered(self,number):
-        length=self._length(number)
         words = [u""]*length
         for i in range(length):
             words[length-1-i]=self.words[number % self.radix]
