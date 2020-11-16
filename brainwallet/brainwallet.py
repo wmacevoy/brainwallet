@@ -16,7 +16,7 @@ from millerrabin import MillerRabin
 class BrainWallet:
     DEFAULT_MINIMUM = None
     DEFAULT_SHARES  = None
-    DEFAULT_ORDERED = True
+    DEFAULT_ORDER_MATTERS = True
     DEFAULT_PRIME = 2**132 - 347
     DEFAULT_LANGUAGE = "english"
     PBKDF2_ROUNDS = 2048
@@ -26,7 +26,7 @@ class BrainWallet:
         self._shares = None
         self._prime = None
         self._language = None
-        self._ordered = None
+        self._orderMatters = None
         self._keys = dict()
         self._millerRabin = MillerRabin()
 
@@ -43,11 +43,11 @@ class BrainWallet:
     def setShares(self,value):
         self._shares = Check.toInt(value,"shares",1)
 
-    def getOrdered(self):
-        return self._ordered if self._ordered != None else self.DEFAULT_ORDERED
+    def getOrderMatters(self):
+        return self._orderMatters if self._orderMatters != None else self.DEFAULT_ORDER_MATTERS
 
-    def setOrdered(self,value):
-        self._ordered = Check.toBoolean(value)
+    def setOrderMatters(self,value):
+        self._orderMatters = Check.toBoolean(value)
         
     def setShares(self, value):
         self._shares = Check.toInt(value, "shares", 1)
@@ -58,6 +58,20 @@ class BrainWallet:
     def setBits(self, bits):
         bits = Check.toInt(bits, "bits", 96, 256)
         self.setPrime(self._millerRabin.prevPrime(2**bits))
+
+    def setMaxLength(self, maxLength):
+        maxLength = Check.toInt(maxLength, "max-length",8)
+        phrases = self._getPhrases()
+        orderMatters = self.getOrderMatters()
+        numbers = Phrases.offset(phrases.radix,maxLength+1,orderMatters)
+        self.setPrime(self._millerRabin.prevPrime(numbers))        
+
+    def getMaxLength(self):
+        phrases = self._getPhrases()
+        orderMatters = self.getOrderMatters()
+        prime = self.getPrime()
+        (length,offset)=phrases.lengthAndOffset(prime-1,orderMatters)
+        return length
 
     def getBits(self):
         prime = self.getPrime()
@@ -93,41 +107,41 @@ class BrainWallet:
     def _getPhrases(self):
         return Phrases.forLanguage(self.getLanguage())
 
-    def number(self, phrase, ordered = None):
+    def number(self, phrase, orderMatters = None):
         phrase = Check.toString(phrase)
         phrases = self._getPhrases()
-        if ordered == None:
-            ordered = self.getOrdered()
-        if not phrases.isPhrase(phrase):
+        if orderMatters == None:
+            orderMatters = self.getOrderMatters()
+        if not phrases.isPhrase(phrase,orderMatters):
             detects = Phrases.detectLanguages(phrase)
             phrases = Phrases.forLanguage(detects[0]) if len(detects) == 1 else None
         if phrases == None:
             raise ValueError("unknown phrase language")
-        return phrases.toNumber(phrase,ordered)
+        return phrases.toNumber(phrase,orderMatters)
 
-    def phrase(self, number, ordered = None):
+    def phrase(self, number, orderMatters = None):
         number = Check.toInt(number)
-        if ordered == None:
-            ordered = self.getOrdered()
-        return self._getPhrases().toPhrase(number, ordered)
+        if orderMatters == None:
+            orderMatters = self.getOrderMatters()
+        return self._getPhrases().toPhrase(number, orderMatters)
 
     def getSecret(self):
         return self.getKey(0)
 
-    def setSecret(self, phrase, ordered = None):
-        self.setKey(0, phrase, ordered)
+    def setSecret(self, phrase, orderMatters = None):
+        self.setKey(0, phrase, orderMatters)
 
-    def getKey(self, index, ordered = None):
+    def getKey(self, index, orderMatters = None):
         name = "index" if index > 0 else "secret"
         index = Check.toInt(index, name, 0)
         if index not in self._keys:
             self._keys[index] = self._getShamir().getKey(index)
-        return self.phrase(self._keys[index],ordered)
+        return self.phrase(self._keys[index],orderMatters)
 
-    def setKey(self, index, phrase, ordered = None):
+    def setKey(self, index, phrase, orderMatters = None):
         name = "index" if index > 0 else "secret"
         index = Check.toInt(index, name)
-        self._keys[index] = self.number(phrase, ordered)
+        self._keys[index] = self.number(phrase, orderMatters)
 
     def randomize(self):
         self.randomizeSecret()
@@ -217,10 +231,10 @@ class BrainWallet:
         minimum = self.getMinimum()
         language = self.getLanguage()
 
-        if self.getOrdered() != self.DEFAULT_ORDERED:
-            print ("--ordered=" +(str(self.getOrdered()).lower()))
+        if self.getOrderMatters() != self.DEFAULT_ORDER_MATTERS:
+            print ("--order-matters=" +(str(self.getOrderMatters()).lower()))
 
-        ordering = "unordered-" if not self.getOrdered() else ""
+        ordering = "fixed-order-" if self.getOrderMatters() else "any-order-"
             
         print ("--language=%s" % language)
         if bits is not None:
@@ -232,28 +246,28 @@ class BrainWallet:
         if shares != None:
             print ("--shares=%d" % shares)
         if 0 in self._keys:
-            print ("--%ssecret=\"%s\"" % (unordered,self._encode2(self.getSecret())))
+            print ("--%ssecret=\"%s\"" % (ordering,self._encode2(self.getSecret())))
         for i in range(1, self.getShares() + 1):
             if i in self._keys:
-                print ("--%skey%d=\"%s\"" % (unordered,i,self._encode2(self.getKey(i))))
+                print ("--%skey%d=\"%s\"" % (ordering,i,self._encode2(self.getKey(i))))
         print ("Secret can be recovered with any %d of the %d keys" %
                (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
     @classmethod
-    def encode2(cls,msg):
+    def _encode2(cls,msg):
         return msg if Check.PYTHON3 else msg.encode("utf-8")
 
     def cli(self, args):
         for i in range(len(args)):
             arg = args[i]
 
-            cmd = "--ordered"
+            cmd = "--order-matters"
             if arg == cmd:
-                print(str(self.getOrdered()).lower())
+                print(str(self.getOrderMatters()).lower())
                 continue
             if arg.startswith(cmd + "="):
-                self.setOrdered(arg[len(cmd) + 1:].lower() == "true")
+                self.setOrderMatters(arg[len(cmd) + 1:].lower() == "true")
                 continue
 
             cmd = "--language"
@@ -296,17 +310,26 @@ class BrainWallet:
                 self.setBits(arg[len(cmd) + 1:])
                 continue
 
-            match = re.search('^--(ordered-|unordered-|)(secret|key([0-9]+))((=)(.*))?$', arg)
+            cmd = "--max-length"
+            if arg == cmd:
+                print(self.getMaxLength())
+                continue
+            if arg.startswith(cmd + "="):
+                self.setMaxLength(arg[len(cmd) + 1:])
+                continue
+            
+
+            match = re.search('^--(fixed-order-|any-order-|)(secret|key([0-9]+))((=)(.*))?$', arg)
             if match:
-                ordered = None
-                if match.group(1) == "ordered-": ordered = True
-                if match.group(1) == "unordered-": ordered = False
+                orderMatters = None
+                if match.group(1) == "fixed-order-": orderMatters = True
+                if match.group(1) == "any-order-": orderMatters = False
                 index = int(match.group(3)) if match.group(2) != "secret" else 0
                 if match.group(5) == "=":
-                    self.setKey(index,match.group(6),ordered)
+                    self.setKey(index,match.group(6),orderMatters)
                     continue
                 else:
-                    print(self.encode2(self.getKey(index,ordered)))
+                    print(self._encode2(self.getKey(index,orderMatters)))
                     continue
             cmd = "--randomize"
             if arg == cmd:

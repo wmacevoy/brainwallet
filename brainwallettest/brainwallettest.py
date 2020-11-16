@@ -13,8 +13,10 @@ parentdir = os.path.dirname(currentdir)
 sys.path.insert(0, parentdir + "/brainwallet")
 
 from brainwallet import BrainWallet
+from millerrabin import MillerRabin
 from check import Check
 from phrases import Phrases
+import combinations
 
 if Check.PYTHON3:
     import io
@@ -79,11 +81,37 @@ class BrainWalletTest(unittest.TestCase):
         result = brainWallet.getHDMasterKey(seed)
         assert self.master == result
 
+    def testMaxLengthFixedOrder(self):
+        brainWallet = BrainWallet()
+        mr = MillerRabin()
+        brainWallet.setOrderMatters(True)        
+        brainWallet.setMaxLength(10)
+        number = 0
+        for k in range(1,10+1):
+            number += 2048**k
+        prime = mr.prevPrime(number)            
+        self.assertEqual(prime,brainWallet.getPrime())
+        self.assertEqual(10,brainWallet.getMaxLength())
+
+
+    def testMaxLengthAnyOrder(self):
+        brainWallet = BrainWallet()
+        mr = MillerRabin()
+
+        brainWallet.setOrderMatters(False)
+        brainWallet.setMaxLength(10)
+        number = 0
+        for k in range(1,10+1):
+            number += combinations.choose(2048,k)
+        prime = mr.prevPrime(number)
+        self.assertEqual(prime,brainWallet.getPrime())
+        self.assertEqual(10,brainWallet.getMaxLength())
+
     def _testRecoverFrom3of5KeysIn(self,bits,language,ordered):
         brainWallet = BrainWallet()
         minimum=3
         shares=5
-        brainWallet.cli(["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--randomize"])
+        brainWallet.cli(["--order-matters=" + str(ordered),"--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--randomize"])
         keys=[""]*6
         self.begin()
         brainWallet.cli(["--secret"])
@@ -104,7 +132,7 @@ class BrainWalletTest(unittest.TestCase):
                         if i3 == i4: continue
                         brainWallet2 = BrainWallet()
 
-                        args=["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits)]
+                        args=["--order-matters=" + str(ordered),"--language=" + language,"--bits=" + str(bits)]
                         args.append("--key"+str(i1)+"="+keys[i1])
                         args.append("--key"+str(i2)+"="+keys[i2])
                         args.append("--key"+str(i3)+"="+keys[i3])

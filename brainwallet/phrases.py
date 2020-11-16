@@ -108,28 +108,49 @@ class Phrases:
 
         return value
 
-    def isPhrase(self,words):
+    def isPhrase(self,words, orderMatters = True):
         words=self.toList(words)
+        wordSet=set() if not orderMatters else None
         for word in words:
             if not word in self.invWords: return False
+            if not orderMatters:
+                if word in wordSet:
+                    return False
+                else:
+                    wordSet.add(word)
+        
         return True
 
-    def _count(self,length,ordered):
-        if ordered:
-            count = self.radix**length
+    @classmethod
+    def count(cls,n,r,orderMatters):
+        if n < 2:
+            raise ValueError("invalid parameters")
+        if orderMatters:
+            count = n**r if r > 0 else 0
         else:
-            count = combinations.choose(self.radix,length)
+            count = combinations.choose(n,r) if r > 0 else 0
         return count
 
-    def _offset(self,length,ordered):
+    @classmethod    
+    def offset(cls,n,r,orderMatters):
+        if n < 2 or r <= 0:
+            raise ValueError("invalid parameters")
         offset = 0
-        for k in range(1,length):
-            offset += self._count(k,ordered)
+        for k in range(1,r):
+            count = cls.count(n,k,orderMatters)
+            if count == 0:
+                raise ValueError("invalid parameters")
+            offset += count
         return offset
 
     @classmethod
-    def rank(cls,n,r,c,ordered):
-        if ordered:
+    def rank(cls,n,r,c,orderMatters):
+        if orderMatters:
+            if n < 2 or len(c) != r:
+                raise ValueError("invalid parameters")
+            for i in range(r):
+                if c[i] < 0 or n <= c[i]:
+                    raise ValueError("invalid parameters")
             a = 0
             for i in range(r):
                 a = a*n + c[i]
@@ -138,8 +159,10 @@ class Phrases:
             return combinations.rank(n,r,c)
 
     @classmethod
-    def unrank(cls,n,r,k,ordered):
-        if ordered:
+    def unrank(cls,n,r,k,orderMatters):
+        if orderMatters:
+            if n < 2 or r < 0 or k < 0 or k >= n**r:
+                raise ValueError("invalid parameters")
             a = k
             c = [0]*r
             for i in range(r):
@@ -148,29 +171,33 @@ class Phrases:
         else:
             return combinations.unrank(n,r,k)
 
-    def _lengthAndOffset(self,number,ordered):
+    def lengthAndOffset(self,number,orderMatters):
         length = 1
         offset = 0
         while True:
-            count = self._count(length,ordered)
+            count = self.count(self.radix,length,orderMatters)
+            if count == 0:
+                return (None,offset)
             if number < offset+count: break
             offset += count
             length += 1
         return (length,offset)
 
-    def toNumber(self,phrase,ordered=True):
+    def toNumber(self,phrase,orderMatters=True):
         phrase=self.toList(phrase)
-        if not self.isPhrase(phrase):
+        if not self.isPhrase(phrase,orderMatters):
             raise ValueError("unknown phrase")
         length = len(phrase)
         c = [self.invWords[phrase[i]] for i in range(length)]
-        return self._offset(length,ordered)+self.rank(self.radix,length,c,ordered)
+        return self.offset(self.radix,length,orderMatters)+self.rank(self.radix,length,c,orderMatters)
 
-    def toPhrase(self,number,ordered=True):
-        (length,offset)=self._lengthAndOffset(number,ordered)
-        c = self.unrank(self.radix,length,number - offset,ordered)
+    def toPhrase(self,number,orderMatters=True):
+        (length,offset)=self.lengthAndOffset(number,orderMatters)
+        if length == None:
+            raise ValueError("unrepresentable")
+        c = self.unrank(self.radix,length,number - offset,orderMatters)
         words = [self.words[c[i]] for i in range(length)]
-        if not ordered:
+        if not orderMatters:
             words.sort()
         phrase=self.space().join(words)
         return phrase
@@ -184,12 +211,12 @@ class Phrases:
         for i in range(length):
             digit = self.invWords[phrase[i]]
             number = number*self.radix + digit
-        number += self._offset(length)
+        number += self.offset(length)
         return number
 
     def toPhrase0(self,number):
         length=self._length(number)
-        number -= self._offset(length)
+        number -= self.offset(length)
         words = [u""]*length
         for i in range(length):
             words[length-1-i]=self.words[number % self.radix]

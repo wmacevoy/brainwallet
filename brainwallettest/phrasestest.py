@@ -78,7 +78,14 @@ class PhrasesTest(unittest.TestCase):
         assert Phrases.forLanguage(language).isPhrase(phrase), \
             "phrase='%s' language=%s" % (phrase, language)
         for ordered in [True,False]:
-            number = Phrases.forLanguage(language).toNumber(phrase,ordered)
+            if not Phrases.forLanguage(language).isPhrase(phrase,ordered):
+                continue
+            try:
+                number = Phrases.forLanguage(language).toNumber(phrase,ordered)
+            except ValueError:
+                print ("phrase='%s' language=%s ordered=%r" % (phrase, language, ordered))
+                raise
+
             detects = Phrases.detectLanguages(phrase)
             for lang2 in detects:
                 number2 = Phrases.forLanguage(lang2).toNumber(phrase,ordered)
