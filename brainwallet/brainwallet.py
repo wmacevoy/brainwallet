@@ -5,6 +5,8 @@ import hashlib
 import hmac
 import math
 import sys
+import re
+
 from shamir import Shamir
 from phrases import Phrases
 from check import Check
@@ -97,10 +99,11 @@ class BrainWallet:
     def _getPhrases(self):
         return Phrases.forLanguage(self.getLanguage())
 
-    def number(self, phrase):
+    def number(self, phrase, ordered = None):
         phrase = Check.toString(phrase)
         phrases = self._getPhrases()
-        ordered = self.getOrdered()
+        if ordered == None:
+            ordered = self.getOrdered()
         if not phrases.isPhrase(phrase):
             detects = Phrases.detectLanguages(phrase)
             phrases = Phrases.forLanguage(detects[0]) if len(detects) == 1 else None
@@ -108,28 +111,29 @@ class BrainWallet:
             raise ValueError("unknown phrase language")
         return phrases.toNumber(phrase,ordered)
 
-    def phrase(self, number):
+    def phrase(self, number, ordered = None):
         number = Check.toInt(number)
-        ordered = self.getOrdered()
+        if ordered == None:
+            ordered = self.getOrdered()
         return self._getPhrases().toPhrase(number, ordered)
 
     def getSecret(self):
         return self.getKey(0)
 
-    def setSecret(self, phrase):
-        self.setKey(0, phrase)
+    def setSecret(self, phrase, ordered = None):
+        self.setKey(0, phrase, ordered)
 
-    def getKey(self, index):
+    def getKey(self, index, ordered = None):
         name = "index" if index > 0 else "secret"
         index = Check.toInt(index, name, 0)
         if index not in self._keys:
             self._keys[index] = self._getShamir().getKey(index)
-        return self.phrase(self._keys[index])
+        return self.phrase(self._keys[index],ordered)
 
-    def setKey(self, index, phrase):
+    def setKey(self, index, phrase, ordered = None):
         name = "index" if index > 0 else "secret"
         index = Check.toInt(index, name)
-        self._keys[index] = self.number(phrase)
+        self._keys[index] = self.number(phrase, ordered)
 
     def randomize(self):
         self.randomizeSecret()
@@ -215,7 +219,7 @@ class BrainWallet:
         if self.getOrdered() != self.DEFAULT_ORDERED:
             print ("--ordered=" +(str(self.getOrdered()).lower()))
 
-        unordered = "unordered-" if not self.getOrdered() else ""
+        ordering = "unordered-" if not self.getOrdered() else ""
             
         print ("--language=%s" % language)
         if bits is not None:
@@ -237,85 +241,101 @@ class BrainWallet:
                (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)
 
+    @classmethod
+    def encode2(cls,msg):
+        return msg if Check.PYTHON3 else msg.encode("utf-8")
+
     def cli(self, args):
         for i in range(len(args)):
             arg = args[i]
 
             cmd = "--ordered"
             if arg == cmd:
-                print(self.getOrdered())
+                print(str(self.getOrdered()).lower())
+                continue
             if arg.startswith(cmd + "="):
                 self.setOrdered(arg[len(cmd) + 1:].lower() == "true")
+                continue
 
             cmd = "--language"
             if arg == cmd:
                 print(self.getLanguage())
+                continue
             if arg.startswith(cmd + "="):
                 self.setLanguage(arg[len(cmd) + 1:])
+                continue
 
             cmd = "--minimum"
             if arg == cmd:
                 print(self.getMinimum())
+                continue
             if arg.startswith(cmd + "="):
                 self.setMinimum(arg[len(cmd) + 1:])
+                continue
 
             cmd = "--shares"
             if arg == cmd:
                 print(self.getShares())
+                continue
             if arg.startswith(cmd + "="):
                 self.setShares(arg[len(cmd) + 1:])
+                continue
 
             cmd = "--prime"
             if arg == cmd:
                 print(self.getPrime())
+                continue
             if arg.startswith(cmd + "="):
                 self.setPrime(arg[len(cmd) + 1:])
+                continue
 
             cmd = "--bits"
+            if arg == cmd:
+                print(self.getBits())
+                continue
             if arg.startswith(cmd + "="):
                 self.setBits(arg[len(cmd) + 1:])
+                continue
 
-            cmd = "--secret"
-            if Check.PYTHON3:
-                if arg == cmd:
-                    print(self.getSecret())
-            else:
-                if arg == cmd:
-                    print(self.getSecret().encode('utf-8'))
-            if arg.startswith(cmd + "="):
-                self.setSecret(arg[len(cmd) + 1:])
-
-            for index in range(1, self.getShares() + 1):
-                cmd = "--key" + str(index)
-                if arg == cmd:
-                    if Check.PYTHON3:
-                        print(self.getKey(index))
-                    else:
-                        print(self.getKey(index).encode('utf-8'))
-                if arg.startswith(cmd + "="):
-                    self.setKey(index, arg[len(cmd) + 1:])
-
+            match = re.search('^--(ordered-|unordered-|)(secret|key([0-9]+))((=)(.*))?$', arg)
+            if match:
+                ordered = None
+                if match.group(1) == "ordered-": ordered = True
+                if match.group(1) == "unordered-": ordered = False
+                index = int(match.group(3)) if match.group(2) != "secret" else 0
+                if match.group(5) == "=":
+                    self.setKey(index,match.group(6),ordered)
+                    continue
+                else:
+                    print(self.encode2(self.getKey(index,ordered)))
+                    continue
             cmd = "--randomize"
             if arg == cmd:
                 self.randomize()
+                continue
             cmd = "--randomizeSecret"
             if arg == cmd:
                 self.randomizeSecret()
+                continue
             cmd = "--randomizeKeys"
             if arg == cmd:
                 self.randomizeKeys()
+                continue
             cmd = "--dump"
             if arg == cmd:
                 self.dump()
+                continue
             cmd = "--seed"
             if arg == cmd:
                 print (binascii.hexlify(self.getSeed()))
+                continue
             cmd = "--master"
             if arg == cmd:
                 seed = self.getSeed()
                 key = self.getHDMasterKey(seed)
                 print (key)
-
+                continue
+            raise ValueError("unknown command " + arg)
 
 def main():
     brainWallet = BrainWallet()
