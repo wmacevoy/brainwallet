@@ -14,8 +14,8 @@ from millerrabin import MillerRabin
 
 
 class BrainWallet:
-    DEFAULT_MINIMUM = 2
-    DEFAULT_SHARES  = 4
+    DEFAULT_MINIMUM = None
+    DEFAULT_SHARES  = None
     DEFAULT_ORDERED = True
     DEFAULT_PRIME = 2**132 - 347
     DEFAULT_LANGUAGE = "english"
@@ -38,13 +38,7 @@ class BrainWallet:
         self._minimum = Check.toInt(value, "minimum", 1)
 
     def getShares(self):
-        if self._shares is not None:
-            return self._shares
-        shares = self.getMinimum() + 2
-        for index in self._keys:
-            if index > shares:
-                shares = index
-        return shares
+        return self._shares
 
     def setShares(self,value):
         self._shares = Check.toInt(value,"shares",1)
@@ -146,10 +140,17 @@ class BrainWallet:
         self._keys[0] = shamir.getSecret()
 
     def randomizeKeys(self):
-        if 0 not in self._keys:
-            raise ValueError("secret must be set")
-        secret = self._keys[0]
+        secret = self._keys[0] if 0 in self._keys else None
         shares = self.getShares()
+        minimum = self.getMinimum()
+        if secret == None:
+            raise ValueError("secret must be set")
+        if minimum is None:
+            raise ValueError("minimum must be set")
+        if shares is None:
+            raise ValueError("shares must be set")
+        if shares < minimum:
+            raise ValueError("shares must be >= minimum")
         shamir = self._getShamir()
         shamir.randomizeKeys(shares)
         self._keys = dict()
@@ -226,17 +227,15 @@ class BrainWallet:
             print ("--bits=%d" % bits)
         else:
             print ("--prime=%d" % prime)
-        print ("--minimum=%d" % minimum)
-        print ("--shares=%d" % shares)
-        if Check.PYTHON3:
-            print ("--%ssecret=\"%s\"" % (unordered,self.getSecret()))
-        else:
-            print ("--%ssecret=\"%s\"" % (unordered,self.getSecret().encode('utf-8')))
+        if minimum != None:
+            print ("--minimum=%d" % minimum)
+        if shares != None:
+            print ("--shares=%d" % shares)
+        if 0 in self._keys:
+            print ("--%ssecret=\"%s\"" % (unordered,self._encode2(self.getSecret())))
         for i in range(1, self.getShares() + 1):
-            if Check.PYTHON3:
-                print ("--%skey%d=\"%s\"" % (unordered, i, self.getKey(i)))
-            else:
-                print ("--%skey%d=\"%s\"" % (unordered, i, self.getKey(i).encode('utf-8')))
+            if i in self._keys:
+                print ("--%skey%d=\"%s\"" % (unordered,i,self._encode2(self.getKey(i))))
         print ("Secret can be recovered with any %d of the %d keys" %
                (minimum, shares))
         print ("Remember the key id (1-%d) and corresponding phrase." % shares)

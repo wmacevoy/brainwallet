@@ -98,12 +98,23 @@ class BrainWalletTest(unittest.TestCase):
         for i1 in range(1,6):
             for i2 in range(1,6):
                 for i3 in range(1,6):
-                    if i1 == i2 or i1 == i3 or i2 == i3: continue
-                    brainWallet2 = BrainWallet()
-                    self.begin()                    
-                    brainWallet2.cli(["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits),"--minimum=" + str(minimum),"--shares=" + str(shares),"--key"+str(i1)+"="+keys[i1],"--key"+str(i2)+"="+keys[i2],"--key"+str(i3)+"="+keys[i3],"--secret"])
-                    secret2 = self.end().rstrip()
-                    self.assertEqual(secret1,secret2)
+                    for i4 in range(0,6):
+                        if i1 == i2 or i1 == i3 or i1 == i4: continue
+                        if i2 == i3 or i2 == i4: continue
+                        if i3 == i4: continue
+                        brainWallet2 = BrainWallet()
+
+                        args=["--ordered=" + str(ordered),"--language=" + language,"--bits=" + str(bits)]
+                        args.append("--key"+str(i1)+"="+keys[i1])
+                        args.append("--key"+str(i2)+"="+keys[i2])
+                        args.append("--key"+str(i3)+"="+keys[i3])
+                        if i4 != 0:
+                            args.append("--key"+str(i4)+"="+keys[i4])
+                        args.append("--secret")
+                        self.begin()                    
+                        brainWallet2.cli(args)
+                        secret2 = self.end().rstrip()
+                        self.assertEqual(secret1,secret2)
 
     def testRecoverFrom3of5Keys(self):
         bits=160

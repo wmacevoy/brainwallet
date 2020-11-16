@@ -6,7 +6,8 @@ from check import Check
 
 class Shamir:
     def __init__(self, minimum, prime):
-        minimum = Check.toInt(minimum, "minimum", 1)
+        if minimum != None:
+            minimum = Check.toInt(minimum, "minimum", 1)
         prime = Check.toPrime(prime)
 
         self._minimum = minimum
@@ -39,6 +40,8 @@ class Shamir:
 
         if self._keys[0] is None:
             raise ValueError("secret must be set")
+        if self._minimum is None:
+            raise ValueError("minimum must be set")
         secret = self._keys[0]
 
         cs = [0 for i in range(self._minimum)]
@@ -124,10 +127,10 @@ class Shamir:
             for x in self._keys:
                 xs.append(x)
                 ys.append(self._keys[x])
-                if len(xs) == self._minimum:
-                    break
+#                if len(xs) == self._minimum:
+#                    break
 
-            if len(xs) < self._minimum:
+            if self._minimum != None and len(xs) < self._minimum:
                 raise ValueError("only %d of minimum %s keys" %
                                  (len(xs), self._minimum))
 
