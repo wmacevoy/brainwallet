@@ -5,6 +5,9 @@ import math
 from check import Check
 import combinations
 
+class ConfigurationError(Exception):
+    pass
+
 class Phrases:
     _PHRASES=dict()
 

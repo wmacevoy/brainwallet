@@ -32,7 +32,8 @@ class RNG:
             data = self.source(bytes)
             k = 0
             for i in range(bytes):
-                bi = ord(data[i:i + 1])
+                b = data[i]
+                bi = b if isinstance(b, int) else ord(b)
                 k = k | (bi << (8 * i))
             k = k & mask
             if k < n:

@@ -15,7 +15,7 @@ class Check:
             value = int(value)
         try:
             intValue = int(value)
-        except:
+        except (TypeError, ValueError):
             return False
 
         if intValue != value:

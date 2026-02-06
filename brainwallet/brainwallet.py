@@ -40,9 +40,6 @@ class BrainWallet:
     def getShares(self):
         return self._shares
 
-    def setShares(self,value):
-        self._shares = Check.toInt(value,"shares",1)
-
     def getOrderMatters(self):
         return self._orderMatters if self._orderMatters != None else self.DEFAULT_ORDER_MATTERS
 

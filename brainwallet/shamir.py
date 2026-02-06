@@ -38,7 +38,7 @@ class Shamir:
     def randomizeKeys(self, shares, rng=RNG()):
         shares = Check.toInt(shares, "shares", self._minimum)
 
-        if self._keys[0] is None:
+        if 0 not in self._keys or self._keys[0] is None:
             raise ValueError("secret must be set")
         if self._minimum is None:
             raise ValueError("minimum must be set")
@@ -103,7 +103,10 @@ class Shamir:
         k points will define a polynomial of up to kth order
         '''
         k = len(xs)
-        assert k == len(set(xs)), "points must be distinct"
+        if k != len(ys):
+            raise ValueError("points must have equal length")
+        if k != len(set(xs)):
+            raise ValueError("points must be distinct")
 
         nums = []
         dens = []
